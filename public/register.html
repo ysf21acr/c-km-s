@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kayıt Ol — MedDoc Akademi | Sınav Hazırlık Platformu</title>
+    <meta name="description"
+        content="Ücretsiz kayıt ol, üniversite sınavlarına çıkmış sorularla hazırlan. AUZEF, Anadolu AÖF, Atatürk AÖF deneme sınavları.">
+    <meta name="robots" content="index, follow">
+    <meta property="og:title" content="MedDoc Akademi - Ücretsiz Kayıt Ol">
+    <meta property="og:description" content="Kayıt ol, üniversite sınavlarına çıkmış sorularla hazırlanmaya başla.">
+    <meta property="og:type" content="website">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0e1a;
+            min-height: 100vh;
+            display: flex;
+            color: #e4e6f0;
+        }
+
+        .reg-left {
+            flex: 1;
+            background: linear-gradient(135deg, #1a1f36, #0d1025);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 60px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .reg-left::before {
+            content: '';
+            position: absolute;
+            top: -100px;
+            right: -100px;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(6, 214, 160, 0.12), transparent 70%);
+            border-radius: 50%;
+        }
+
+        .reg-left::after {
+            content: '';
+            position: absolute;
+            bottom: -150px;
+            left: -100px;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(67, 97, 238, 0.1), transparent 70%);
+            border-radius: 50%;
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 50px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo-icon {
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, #4361ee, #7b2fbe);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            box-shadow: 0 8px 30px rgba(67, 97, 238, 0.3);
+        }
+
+        .brand-logo h1 {
+            font-size: 26px;
+            font-weight: 800;
+        }
+
+        .brand-logo h1 span {
+            color: #4361ee;
+        }
+
+        .hero-text {
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-text h2 {
+            font-size: 34px;
+            font-weight: 800;
+            line-height: 1.3;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #e4e6f0, #a8b0d0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-text p {
+            font-size: 15px;
+            color: #8892b0;
+            line-height: 1.7;
+            max-width: 420px;
+        }
+
+        .stats-row {
+            display: flex;
+            gap: 24px;
+            margin-top: 40px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat-item {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 20px 24px;
+            text-align: center;
+            flex: 1;
+        }
+
+        .stat-item .num {
+            font-size: 28px;
+            font-weight: 800;
+            color: #4361ee;
+        }
+
+        .stat-item .lbl {
+            font-size: 12px;
+            color: #8892b0;
+            margin-top: 4px;
+        }
+
+        .reg-right {
+            width: 560px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 50px 60px;
+            background: #0f1320;
+            border-left: 1px solid rgba(255, 255, 255, 0.06);
+            overflow-y: auto;
+        }
+
+        .steps-nav {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            margin-bottom: 32px;
+        }
+
+        .step-dot {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            color: #5a6380;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+
+        .step-dot.active {
+            border-color: #4361ee;
+            color: #4361ee;
+            background: rgba(67, 97, 238, 0.1);
+        }
+
+        .step-dot.done {
+            border-color: #06d6a0;
+            color: white;
+            background: #06d6a0;
+        }
+
+        .step-line {
+            flex: 1;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.08);
+            transition: background 0.3s;
+        }
+
+        .step-line.done {
+            background: #06d6a0;
+        }
+
+        .step-label {
+            font-size: 11px;
+            color: #5a6380;
+            margin-top: 4px;
+            text-align: center;
+        }
+
+        .step-label.active {
+            color: #4361ee;
+        }
+
+        .step-label.done {
+            color: #06d6a0;
+        }
+
+        .step-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .step-panel {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .step-panel.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        .form-title {
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 6px;
+        }
+
+        .form-subtitle {
+            color: #8892b0;
+            font-size: 13px;
+            margin-bottom: 24px;
+        }
+
+        .school-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .school-card {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .school-card:hover {
+            border-color: rgba(67, 97, 238, 0.3);
+            background: rgba(67, 97, 238, 0.05);
+        }
+
+        .school-card.selected {
+            border-color: #4361ee;
+            background: rgba(67, 97, 238, 0.08);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+        }
+
+        .school-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .school-info h4 {
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .school-info p {
+            font-size: 12px;
+            color: #8892b0;
+            margin-top: 2px;
+        }
+
+        .dept-search {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            padding: 12px 16px 12px 44px;
+            color: #e4e6f0;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: all 0.2s;
+            margin-bottom: 16px;
+        }
+
+        .dept-search:focus {
+            border-color: #4361ee;
+        }
+
+        .dept-search-wrap {
+            position: relative;
+        }
+
+        .dept-search-wrap i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #5a6380;
+        }
+
+        .dept-list {
+            max-height: 300px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .dept-item {
+            padding: 14px 18px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .dept-item:hover {
+            border-color: rgba(67, 97, 238, 0.3);
+        }
+
+        .dept-item.selected {
+            border-color: #4361ee;
+            background: rgba(67, 97, 238, 0.08);
+        }
+
+        .dept-item .name {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .dept-item .count {
+            font-size: 12px;
+            color: #8892b0;
+        }
+
+        .input-group {
+            margin-bottom: 18px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #a8b0d0;
+            margin-bottom: 8px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #5a6380;
+            font-size: 18px;
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            padding: 14px 16px 14px 48px;
+            color: #e4e6f0;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .input-wrapper input:focus {
+            border-color: #4361ee;
+            background: rgba(67, 97, 238, 0.05);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+        }
+
+        .selected-info {
+            background: rgba(6, 214, 160, 0.08);
+            border: 1px solid rgba(6, 214, 160, 0.2);
+            border-radius: 14px;
+            padding: 14px 18px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+        }
+
+        .selected-info i {
+            color: #06d6a0;
+            font-size: 20px;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .btn-back {
+            flex: 1;
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            color: #a8b0d0;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-back:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .btn-next {
+            flex: 2;
+            padding: 14px;
+            background: linear-gradient(135deg, #4361ee, #3b4fd4);
+            border: none;
+            border-radius: 14px;
+            color: white;
+            font-size: 14px;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 20px rgba(67, 97, 238, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-next:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(67, 97, 238, 0.4);
+        }
+
+        .btn-next:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-next .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .password-strength {
+            height: 4px;
+            border-radius: 2px;
+            margin-top: 8px;
+            transition: all 0.3s;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .password-strength .bar {
+            height: 100%;
+            border-radius: 2px;
+            transition: all 0.3s;
+            width: 0;
+        }
+
+        .error-alert {
+            background: rgba(239, 71, 111, 0.1);
+            border: 1px solid rgba(239, 71, 111, 0.3);
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: #ef476f;
+            font-size: 13px;
+            margin-bottom: 16px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .error-alert.show {
+            display: flex;
+        }
+
+        .login-link {
+            text-align: center;
+            font-size: 14px;
+            color: #8892b0;
+            margin-top: 24px;
+        }
+
+        .login-link a {
+            color: #4361ee;
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .login-link a:hover {
+            color: #6b82f7;
+        }
+
+        @media (max-width: 900px) {
+            body {
+                flex-direction: column;
+            }
+
+            .reg-left {
+                display: none;
+            }
+
+            .reg-right {
+                width: 100%;
+                min-height: 100vh;
+                padding: 30px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="reg-left">
+        <div class="brand-logo">
+            <div class="logo-icon">🎓</div>
+            <h1>Med<span>Doc</span> Akademi</h1>
+        </div>
+        <div class="hero-text">
+            <h2>Okulunu Seç,<br>Hemen Başla</h2>
+            <p>3 adımda kayıt ol, okulunu ve bölümünü seç, binlerce soruyla sınavlarına hazırlan.</p>
+        </div>
+        <div class="stats-row">
+            <div class="stat-item">
+                <div class="num">10K+</div>
+                <div class="lbl">Soru</div>
+            </div>
+            <div class="stat-item">
+                <div class="num">3</div>
+                <div class="lbl">Üniversite</div>
+            </div>
+            <div class="stat-item">
+                <div class="num">50+</div>
+                <div class="lbl">Bölüm</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="reg-right">
+        <!-- Step Nav -->
+        <div class="steps-nav">
+            <div class="step-col">
+                <div class="step-dot active" id="sd1">1</div>
+                <div class="step-label active" id="sl1">Okul</div>
+            </div>
+            <div class="step-line" id="line1"></div>
+            <div class="step-col">
+                <div class="step-dot" id="sd2">2</div>
+                <div class="step-label" id="sl2">Bölüm</div>
+            </div>
+            <div class="step-line" id="line2"></div>
+            <div class="step-col">
+                <div class="step-dot" id="sd3">3</div>
+                <div class="step-label" id="sl3">Hesap</div>
+            </div>
+        </div>
+
+        <div class="error-alert" id="errorMsg"><i class="bi bi-exclamation-circle-fill"></i><span id="errorText"></span>
+        </div>
+
+        <!-- STEP 1 -->
+        <div class="step-panel active" id="panel1">
+            <div class="form-title">Okulunu Seç</div>
+            <div class="form-subtitle">Hangi üniversitede okuyorsun?</div>
+            <div class="school-cards" id="schoolGrid"></div>
+            <div class="btn-row" style="margin-top:24px">
+                <button class="btn-next" id="next1" disabled style="flex:1">Devam Et <i
+                        class="bi bi-arrow-right"></i></button>
+            </div>
+        </div>
+
+        <!-- STEP 2 -->
+        <div class="step-panel" id="panel2">
+            <div class="form-title">Bölümünü Seç</div>
+            <div class="form-subtitle" id="schoolNameLabel">Bölüm seç</div>
+            <div class="dept-search-wrap">
+                <i class="bi bi-search"></i>
+                <input type="text" class="dept-search" id="deptSearch" placeholder="Bölüm ara...">
+            </div>
+            <div class="dept-list" id="deptGrid"></div>
+            <div class="btn-row" style="margin-top:20px">
+                <button class="btn-back" id="back2"><i class="bi bi-arrow-left"></i> Geri</button>
+                <button class="btn-next" id="next2" disabled>Devam Et <i class="bi bi-arrow-right"></i></button>
+            </div>
+        </div>
+
+        <!-- STEP 3 -->
+        <div class="step-panel" id="panel3">
+            <div class="form-title">Hesabını Oluştur</div>
+            <div class="form-subtitle">Son adım! Bilgilerini gir ve başla</div>
+
+            <div class="selected-info" id="selectedInfo"><i class="bi bi-check-circle-fill"></i>
+                <div></div>
+            </div>
+
+            <form id="registerForm">
+                <div class="input-group">
+                    <label>Ad Soyad</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="name" placeholder="Adınız Soyadınız" required>
+                        <i class="bi bi-person"></i>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>E-posta Adresi</label>
+                    <div class="input-wrapper">
+                        <input type="email" id="email" placeholder="ornek@email.com" required>
+                        <i class="bi bi-envelope"></i>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Şifre (en az 6 karakter)</label>
+                    <div class="input-wrapper">
+                        <input type="password" id="password" placeholder="••••••••" required minlength="6">
+                        <i class="bi bi-lock"></i>
+                    </div>
+                    <div class="password-strength">
+                        <div class="bar" id="pwdBar"></div>
+                    </div>
+                </div>
+                <div class="btn-row">
+                    <button type="button" class="btn-back" id="back3"><i class="bi bi-arrow-left"></i> Geri</button>
+                    <button type="submit" class="btn-next" id="submitBtn">
+                        <span id="btnText">Kayıt Ol</span>
+                        <div class="spinner" id="btnSpinner"></div>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="login-link">Zaten hesabın var mı? <a href="/login.html">Giriş Yap</a></div>
+    </div>
+
+    <script>
+        if (localStorage.getItem('token')) window.location.href = '/';
+
+        let schoolsData = null;
+        let selectedSchool = null;
+        let selectedDeptIdx = null;
+        let currentStep = 1;
+
+        const schoolIcons = {
+            'AUZEF': { icon: '🏛️', bg: 'linear-gradient(135deg, #4361ee, #5e60ce)' },
+            'ANADOLU_AOF': { icon: '🎓', bg: 'linear-gradient(135deg, #06d6a0, #0ea5e9)' },
+            'ATATURK_AOF': { icon: '📚', bg: 'linear-gradient(135deg, #ef476f, #f97316)' }
+        };
+
+        async function loadSchools() {
+            try {
+                const res = await fetch('/api/data/schools');
+                schoolsData = await res.json();
+                renderSchools();
+            } catch (err) {
+                document.getElementById('errorText').textContent = 'Okul verileri yüklenemedi';
+                document.getElementById('errorMsg').classList.add('show');
+            }
+        }
+
+        function renderSchools() {
+            const grid = document.getElementById('schoolGrid');
+            grid.innerHTML = '';
+            for (const [key, school] of Object.entries(schoolsData)) {
+                const si = schoolIcons[key] || { icon: '🏫', bg: 'linear-gradient(135deg,#666,#999)' };
+                const card = document.createElement('div');
+                card.className = 'school-card';
+                card.innerHTML = `
+                    <div class="school-icon" style="background:${si.bg};color:#fff">${si.icon}</div>
+                    <div class="school-info">
+                        <h4>${school.name}</h4>
+                        <p>${school.departments.length} bölüm</p>
+                    </div>
+                `;
+                card.addEventListener('click', () => {
+                    document.querySelectorAll('.school-card').forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                    selectedSchool = key;
+                    document.getElementById('next1').disabled = false;
+                });
+                grid.appendChild(card);
+            }
+        }
+
+        function renderDepts(filter = '') {
+            const grid = document.getElementById('deptGrid');
+            grid.innerHTML = '';
+            const depts = schoolsData[selectedSchool].departments;
+            const filtered = filter ? depts.filter(d => d.name.toLowerCase().includes(filter.toLowerCase())) : depts;
+            filtered.forEach((dept, i) => {
+                const realIdx = depts.indexOf(dept);
+                const item = document.createElement('div');
+                item.className = 'dept-item' + (selectedDeptIdx === realIdx ? ' selected' : '');
+                item.innerHTML = `<span class="name">${dept.name}</span><span class="count">${dept.courses.length} ders</span>`;
+                item.addEventListener('click', () => {
+                    document.querySelectorAll('.dept-item').forEach(d => d.classList.remove('selected'));
+                    item.classList.add('selected');
+                    selectedDeptIdx = realIdx;
+                    document.getElementById('next2').disabled = false;
+                });
+                grid.appendChild(item);
+            });
+        }
+
+        function goToStep(step) {
+            currentStep = step;
+            document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById('panel' + step).classList.add('active');
+            for (let i = 1; i <= 3; i++) {
+                const dot = document.getElementById('sd' + i);
+                const lbl = document.getElementById('sl' + i);
+                dot.classList.remove('active', 'done');
+                lbl.classList.remove('active', 'done');
+                if (i < step) { dot.classList.add('done'); dot.innerHTML = '<i class="bi bi-check"></i>'; lbl.classList.add('done'); }
+                else if (i === step) { dot.classList.add('active'); dot.textContent = i; lbl.classList.add('active'); }
+                else { dot.textContent = i; }
+            }
+            if (document.getElementById('line1')) document.getElementById('line1').classList.toggle('done', step > 1);
+            if (document.getElementById('line2')) document.getElementById('line2').classList.toggle('done', step > 2);
+        }
+
+        document.getElementById('next1').addEventListener('click', () => {
+            if (!selectedSchool) return;
+            selectedDeptIdx = null;
+            document.getElementById('next2').disabled = true;
+            document.getElementById('schoolNameLabel').textContent = schoolsData[selectedSchool].name + ' — Bölüm Seç';
+            renderDepts();
+            goToStep(2);
+        });
+        document.getElementById('back2').addEventListener('click', () => goToStep(1));
+        document.getElementById('next2').addEventListener('click', () => {
+            if (selectedDeptIdx === null) return;
+            const school = schoolsData[selectedSchool];
+            const dept = school.departments[selectedDeptIdx];
+            document.querySelector('#selectedInfo div').innerHTML = `<strong>${school.name}</strong> — ${dept.name} (${dept.courses.length} ders)`;
+            goToStep(3);
+        });
+        document.getElementById('back3').addEventListener('click', () => goToStep(2));
+        document.getElementById('deptSearch').addEventListener('input', e => renderDepts(e.target.value));
+
+        // Password strength
+        document.getElementById('password').addEventListener('input', e => {
+            const val = e.target.value;
+            const bar = document.getElementById('pwdBar');
+            let score = 0;
+            if (val.length >= 6) score++;
+            if (val.length >= 8) score++;
+            if (/[A-Z]/.test(val)) score++;
+            if (/[0-9]/.test(val)) score++;
+            if (/[^A-Za-z0-9]/.test(val)) score++;
+            const pct = Math.min(100, score * 20);
+            bar.style.width = pct + '%';
+            bar.style.background = pct <= 40 ? '#ef476f' : pct <= 60 ? '#f97316' : '#06d6a0';
+        });
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const name = document.getElementById('name').value.trim();
+            const errorMsg = document.getElementById('errorMsg');
+            const submitBtn = document.getElementById('submitBtn');
+
+            errorMsg.classList.remove('show');
+            submitBtn.disabled = true;
+            document.getElementById('btnText').textContent = 'Kayıt oluşturuluyor...';
+            document.getElementById('btnSpinner').style.display = 'inline-block';
+
+            try {
+                const res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, name, school_key: selectedSchool, department_idx: selectedDeptIdx })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Kayıt başarısız');
+
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+                window.location.href = '/';
+            } catch (err) {
+                document.getElementById('errorText').textContent = err.message;
+                errorMsg.classList.add('show');
+                submitBtn.disabled = false;
+                document.getElementById('btnText').textContent = 'Kayıt Ol';
+                document.getElementById('btnSpinner').style.display = 'none';
+            }
+        });
+
+        loadSchools();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedDoc — Sınav Hazırlık Platformu</title>
+    <meta name="description"
+        content="Üniversite sınavlarına hazırlanmanın en kolay yolu. Çıkmış soruları çöz, kendini test et. AUZEF, Anadolu AÖF, Atatürk AÖF sınav soruları.">
+    <meta name="keywords"
+        content="sınav hazırlık, çıkmış sorular, AUZEF, Anadolu AÖF, Atatürk AÖF, üniversite sınavları, online eğitim, soru çöz">
+    <meta name="author" content="MedDoc Akademi">
+    <meta name="robots" content="index, follow">
+    <meta property="og:title" content="MedDoc — Sınav Hazırlık Platformu">
+    <meta property="og:description"
+        content="Binlerce çıkmış soru ile sınavlarına hazırlan. AUZEF, Anadolu AÖF, Atatürk AÖF.">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="tr_TR">
+    <link rel="canonical" href="/">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+    <style>
+        /* ─── Quiz Animations ─── */
+        @keyframes correctPulse {
+            0% {
+                transform: scale(1)
+            }
+
+            50% {
+                transform: scale(1.05)
+            }
+
+            100% {
+                transform: scale(1)
+            }
+        }
+
+        @keyframes wrongShake {
+
+            0%,
+            100% {
+                transform: translateX(0)
+            }
+
+            20% {
+                transform: translateX(-8px)
+            }
+
+            40% {
+                transform: translateX(8px)
+            }
+
+            60% {
+                transform: translateX(-5px)
+            }
+
+            80% {
+                transform: translateX(5px)
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px)
+            }
+
+            to {
+                opacity: 1;
+                transform: none
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0
+            }
+
+            to {
+                opacity: 1
+            }
+        }
+
+        .quiz-correct {
+            animation: correctPulse 0.5s ease;
+            border-color: var(--secondary) !important;
+            background: var(--secondary-soft) !important;
+        }
+
+        .quiz-wrong {
+            animation: wrongShake 0.4s ease;
+            border-color: var(--danger) !important;
+            background: var(--danger-soft) !important;
+        }
+
+        .quiz-highlight {
+            border-color: var(--secondary) !important;
+            background: rgba(6, 214, 160, 0.08) !important;
+        }
+
+        .quiz-option {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1.5px solid var(--border);
+            border-radius: 14px;
+            padding: 14px 18px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .quiz-option:hover:not(.disabled) {
+            border-color: rgba(67, 97, 238, 0.4);
+            background: rgba(67, 97, 238, 0.06);
+        }
+
+        .quiz-option .opt-letter {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+
+        .quiz-option.disabled {
+            cursor: default;
+            opacity: 0.85;
+        }
+
+        .quiz-progress {
+            height: 4px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.06);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .quiz-progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transition: width 0.4s;
+        }
+
+        .explanation-box {
+            background: rgba(6, 214, 160, 0.08);
+            border: 1px solid rgba(6, 214, 160, 0.2);
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-top: 14px;
+            font-size: 13px;
+            color: var(--text-muted);
+            animation: slideIn 0.3s ease;
+        }
+
+        .confetti-particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: confetti 0.8s ease forwards;
+            pointer-events: none;
+        }
+
+        @keyframes confetti {
+            0% {
+                opacity: 1;
+                transform: translateY(0) rotate(0)
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateY(-60px) rotate(720deg)
+            }
+        }
+
+        /* ─── Exam Filter Buttons ─── */
+        .exam-filter-btn {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        .exam-filter-btn:hover {
+            border-color: var(--primary);
+            color: #fff;
+        }
+
+        .exam-filter-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
+            box-shadow: 0 2px 12px var(--primary-glow);
+        }
+
+        /* ─── Exam Cards ─── */
+        .exam-card {
+            background: var(--dark2);
+            border: 1.5px solid var(--border);
+            border-radius: 16px;
+            padding: 20px 22px;
+            cursor: pointer;
+            transition: all 0.25s;
+            position: relative;
+            overflow: hidden;
+            border-left: 4px solid;
+            animation: slideIn 0.3s ease backwards;
+        }
+
+        .exam-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .exam-card .ec-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            margin-bottom: 14px;
+        }
+
+        .exam-card .ec-course {
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-bottom: 6px;
+        }
+
+        .exam-card .ec-title {
+            font-size: 15px;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 12px;
+            line-height: 1.3;
+        }
+
+        .exam-card .ec-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .exam-card .ec-badge {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 14px;
+        }
+
+        .exam-card .ec-count {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text-muted);
+        }
+
+        /* ─── Sidebar Timer ─── */
+        .sidebar-timer-widget {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            margin: 0 16px 16px 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .circular-progress {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+            transition: background 1s linear;
+        }
+
+        .inner-circle {
+            position: absolute;
+            width: 68px;
+            height: 68px;
+            border-radius: 50%;
+            background: var(--dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .circular-progress.danger-blink .inner-circle {
+            animation: pulseDanger 1s infinite alternate;
+        }
+
+        @keyframes pulseDanger {
+            from {
+                color: var(--danger);
+                text-shadow: none
+            }
+
+            to {
+                color: #fff;
+                text-shadow: 0 0 8px var(--danger)
+            }
+        }
+
+        .upgrade-btn-small {
+            background: linear-gradient(135deg, #f9a826, #f77f00);
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 13px;
+            font-weight: 800;
+            color: #fff;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        .upgrade-btn-small:hover {
+            transform: scale(1.05);
+        }
+
+        .live-timer {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        /* ─── Mistake Items ─── */
+        .mistake-item {
+            background: var(--dark2);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px;
+            margin-bottom: 12px;
+            animation: slideIn 0.3s ease backwards;
+        }
+
+        /* ─── Table ─── */
+        .table-custom th {
+            border-bottom: 1px solid var(--border);
+        }
+
+        .table-custom td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+
+        .table-custom tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table-custom tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* ─── Course Card ─── */
+        .course-card {
+            background: var(--dark2);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .course-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .course-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--bg-color), var(--bg-color));
+            transition: background 0.3s;
+        }
+
+        .cc-year {
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .cc-title {
+            font-size: 16px;
+            font-weight: 800;
+            color: #fff;
+            margin: 0;
+        }
+
+        .cc-desc {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin: 0;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            flex: 1;
+        }
+
+        .cc-meta {
+            display: flex;
+            gap: 8px;
+            margin-top: auto;
+            align-items: center;
+        }
+
+        .cc-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- SIDEBAR -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">🎓</div>
+            <div class="brand-text">MedDoc<small id="schoolLabel">Yükleniyor...</small></div>
+        </div>
+        <div class="nav-section-title">Platform</div>
+        <a class="nav-link-custom" data-page="courses" onclick="showPage('courses');renderCourses()"><i
+                class="bi bi-book icon"></i> Dersler</a>
+        <a class="nav-link-custom active" data-page="exams" onclick="showPage('exams')"><i
+                class="bi bi-pencil-square icon"></i> Sınavlar</a>
+        <a class="nav-link-custom" data-page="mistakes" onclick="showPage('mistakes');loadMistakes()"><i
+                class="bi bi-x-circle icon"></i> Hatalı Sorular <span class="nav-badge" id="mistakeCount"
+                style="background:rgba(239,71,111,0.2);color:var(--danger)">0</span></a>
+        <a class="nav-link-custom" data-page="profile" onclick="showPage('profile')"><i class="bi bi-person icon"></i>
+            Profilim</a>
+        <a class="nav-link-custom" data-page="settings" onclick="showPage('settings')"><i class="bi bi-gear icon"></i>
+            Ayarlar</a>
+        <a class="nav-link-custom" data-page="feedback" onclick="showPage('feedback')"><i
+                class="bi bi-chat-dots icon"></i>
+            Geri Bildirim</a>
+        <div class="nav-section-title">Hesap</div>
+        <a class="nav-link-custom" onclick="logout()" style="color:var(--danger)"><i
+                class="bi bi-box-arrow-left icon"></i> Çıkış Yap</a>
+        <div style="flex:1"></div>
+        <!-- Premium Card (free users only) -->
+        <div id="sidebarPremiumCard"
+            style="display:none;margin:0 16px 16px;background:linear-gradient(135deg,rgba(249,168,38,0.12),rgba(247,127,0,0.08));border:1px solid rgba(249,168,38,0.2);border-radius:14px;padding:14px;text-align:center">
+            <div style="font-size:20px;margin-bottom:6px">⭐</div>
+            <div style="font-size:12px;font-weight:800;color:#f9a826;margin-bottom:8px">Premium'a Geç</div>
+            <button class="upgrade-btn-small" onclick="openUpgradeModal()"><i class="bi bi-stars"></i> Yükselt</button>
+        </div>
+        <!-- Premium Badge (premium users only) -->
+        <div id="sidebarPremiumBadge"
+            style="display:none;margin:0 16px 16px;background:linear-gradient(135deg,rgba(6,214,160,0.12),rgba(6,214,160,0.05));border:1px solid rgba(6,214,160,0.25);border-radius:14px;padding:12px;text-align:center">
+            <div style="font-size:13px;font-weight:800;color:#06d6a0"><i class="bi bi-patch-check-fill"></i> Premium Üye
+            </div>
+        </div>
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar" id="userAvatar">?</div>
+                <div class="user-details">
+                    <div class="name" id="userName">Kullanıcı</div>
+                    <div class="meta" id="userMeta">—</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        <div class="topbar">
+            <div class="topbar-left">
+                <button class="hamburger" id="hamburgerBtn" title="Menü"><i class="bi bi-list"></i></button>
+                <div class="topbar-title"><strong>MedDoc</strong> — Sınav Hazırlık</div>
+            </div>
+            <div class="topbar-actions">
+                <div class="timer-pill" id="timerPill" title="Bugün kalan ücretsiz süreniz">
+                    <i class="bi bi-clock timer-icon"></i>
+                    <span class="live-timer" id="timerText">10:00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ COURSES PAGE ═══ -->
+        <div class="page" id="page-courses">
+            <h2 style="font-size:22px;font-weight:900;margin-bottom:24px">Tüm Dersler</h2>
+            <div style="display:flex;gap:10px;margin-bottom:24px;overflow-x:auto;padding-bottom:8px"
+                id="courseTermFilters">
+                <button class="exam-filter-btn active" onclick="filterCourses('all', this)">Tümü</button>
+            </div>
+            <div id="coursesCardsGrid"
+                style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px">
+                <!-- Courses injected here -->
+            </div>
+        </div>
+
+        <!-- ═══ COURSE DETAIL PAGE (EXAMS LIST) ═══ -->
+        <div class="page" id="page-course-detail">
+            <div style="display:flex;align-items:center;margin-bottom:28px;gap:16px">
+                <button class="btn-ghost" onclick="showPage('courses')" style="padding:8px 16px;border-radius:10px"><i
+                        class="bi bi-arrow-left"></i> Derslere Dön</button>
+                <h2 style="font-size:22px;font-weight:900;margin:0" id="detailCourseTitle">Ders Adı</h2>
+            </div>
+
+            <div style="background:var(--dark2);border:1px solid var(--border);border-radius:16px;overflow:hidden">
+                <table style="width:100%;text-align:left;border-collapse:collapse" class="table-custom">
+                    <thead>
+                        <tr style="background:rgba(255,255,255,0.02)">
+                            <th
+                                style="padding:16px 24px;color:var(--text-dim);font-size:11px;font-weight:800;letter-spacing:1px">
+                                SINAV ADI</th>
+                            <th
+                                style="padding:16px 24px;color:var(--text-dim);font-size:11px;font-weight:800;letter-spacing:1px">
+                                TÜR</th>
+                            <th
+                                style="padding:16px 24px;color:var(--text-dim);font-size:11px;font-weight:800;letter-spacing:1px;text-align:right">
+                                İŞLEM</th>
+                        </tr>
+                    </thead>
+                    <tbody id="courseExamsList">
+                        <!-- Exam rows injected here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ═══ EXAMS PAGE (DEFAULT) ═══ -->
+        <div class="page active" id="page-exams">
+            <!-- Hero -->
+            <div class="hero-section" style="margin-bottom:24px">
+                <div class="hero-eyebrow"><i class="bi bi-mortarboard"></i> <span id="heroSchool">—</span></div>
+                <h1 style="font-size:22px" id="heroDept">Sınavlar</h1>
+                <p style="color:var(--text-muted);font-size:14px" id="heroSubtitle">Bölümüne ait sınavları seç ve
+                    çözmeye başla</p>
+            </div>
+
+            <!-- Filter bar -->
+            <div
+                style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+                <select class="form-input" id="examCourseFilter" onchange="filterExamsByCourse()"
+                    style="max-width:260px;background:var(--dark2);border:1px solid var(--border);color:#fff;padding:10px 16px;border-radius:12px;font-weight:600;cursor:pointer;font-family:'Nunito',sans-serif">
+                    <option value="">Tüm Dersleri Göster</option>
+                </select>
+                <div style="display:flex;gap:6px;flex-wrap:wrap" id="examTypeFilters">
+                    <button class="exam-filter-btn active" onclick="filterExams('all',this)">Tümü</button>
+                    <button class="exam-filter-btn" onclick="filterExams('Vize',this)">Vize</button>
+                    <button class="exam-filter-btn" onclick="filterExams('Final',this)">Final</button>
+                    <button class="exam-filter-btn" onclick="filterExams('Bütünleme',this)">Bütünleme</button>
+                    <button class="exam-filter-btn" onclick="filterExams('Deneme',this)">Deneme</button>
+                </div>
+            </div>
+
+            <!-- Exam cards grid -->
+            <div id="examCardsGrid"
+                style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px">
+                <div style="text-align:center;padding:60px 20px;color:var(--text-dim);grid-column:1/-1">
+                    <div style="font-size:40px;margin-bottom:12px">📝</div>
+                    <p>Sınavlar yükleniyor...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ QUIZ ACTIVE ═══ -->
+        <div class="page" id="page-quiz">
+            <div id="quizActive">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+                    <div style="display:flex;align-items:center;gap:12px">
+                        <button class="btn-ghost" onclick="resetQuiz()" style="padding:6px 12px;font-size:12px"><i
+                                class="bi bi-arrow-left"></i> Geri</button>
+                        <h3 style="font-size:16px;font-weight:800">Soru <span id="qNum">1</span>/<span
+                                id="qTotal">10</span></h3>
+                    </div>
+                    <div style="display:flex;gap:8px;align-items:center">
+                        <span class="tag success" id="qCorrectTag">✓ 0</span>
+                        <span class="tag danger" id="qWrongTag">✗ 0</span>
+                    </div>
+                </div>
+                <div class="quiz-progress">
+                    <div class="quiz-progress-fill" id="quizProgressFill" style="width:0%"></div>
+                </div>
+                <div style="background:var(--dark2);border:1px solid var(--border);border-radius:18px;padding:28px;position:relative"
+                    id="questionCard">
+                    <p style="font-size:15px;font-weight:600;line-height:1.7;margin-bottom:20px" id="questionText"></p>
+                    <div id="optionsContainer"></div>
+                    <div id="explanationArea"></div>
+                </div>
+                <div style="text-align:right;margin-top:16px">
+                    <button class="btn-primary-custom" id="nextQuestionBtn" style="display:none"
+                        onclick="nextQuestion()">Sonraki Soru <i class="bi bi-arrow-right"></i></button>
+                </div>
+            </div>
+            <div id="quizResult" style="display:none;text-align:center;padding:40px 0">
+                <div style="font-size:64px;margin-bottom:16px" id="resultEmoji">🎉</div>
+                <h2 style="font-size:28px;font-weight:900;margin-bottom:8px" id="resultTitle">Tebrikler!</h2>
+                <p style="color:var(--text-muted);margin-bottom:28px" id="resultText"></p>
+                <div style="display:flex;gap:16px;justify-content:center;margin-bottom:28px">
+                    <div class="stat-card" style="min-width:120px">
+                        <div class="stat-num" style="color:var(--secondary)" id="resCorrect">0</div>
+                        <div class="stat-label">Doğru</div>
+                    </div>
+                    <div class="stat-card" style="min-width:120px">
+                        <div class="stat-num" style="color:var(--danger)" id="resWrong">0</div>
+                        <div class="stat-label">Yanlış</div>
+                    </div>
+                    <div class="stat-card" style="min-width:120px">
+                        <div class="stat-num" style="color:var(--primary)" id="resRate">0%</div>
+                        <div class="stat-label">Başarı</div>
+                    </div>
+                </div>
+                <button class="btn-primary-custom" onclick="resetQuiz()"><i class="bi bi-arrow-repeat"></i> Tekrar
+                    Çöz</button>
+                <button class="btn-ghost" style="margin-left:10px" onclick="showPage('mistakes');loadMistakes()">Hatalı
+                    Soruları Gör</button>
+            </div>
+        </div>
+
+        <!-- ═══ MISTAKES ═══ -->
+        <div class="page" id="page-mistakes">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+                <div>
+                    <h2 style="font-size:22px;font-weight:900;margin-bottom:4px">❌ Hatalı Sorular</h2>
+                    <p style="color:var(--text-muted);font-size:14px">Yanlış yaptığın soruları burada tekrar çöz</p>
+                </div>
+                <button class="btn-primary-custom" onclick="startMistakeReview()"><i class="bi bi-arrow-repeat"></i>
+                    Hataları Tekrar Et</button>
+            </div>
+            <div id="mistakesList"></div>
+        </div>
+
+        <!-- ═══ PROFILE ═══ -->
+        <div class="page" id="page-profile">
+            <h2 style="font-size:22px;font-weight:900;margin-bottom:20px">👤 Profilim</h2>
+            <div
+                style="background:var(--dark2);border:1px solid var(--border);border-radius:20px;padding:32px;max-width:520px">
+                <div style="display:flex;align-items:center;gap:20px;margin-bottom:28px">
+                    <div class="user-avatar" id="profileAvatar"
+                        style="width:64px;height:64px;font-size:24px;border-radius:18px">?</div>
+                    <div>
+                        <div style="font-size:18px;font-weight:900" id="profileName">—</div>
+                        <div style="color:var(--text-muted);font-size:13px" id="profileEmail">—</div>
+                    </div>
+                </div>
+                <div style="display:grid;gap:16px">
+                    <div
+                        style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)">
+                        <span style="color:var(--text-dim);font-size:13px;font-weight:700">Üniversite</span>
+                        <span style="font-weight:700;font-size:14px" id="profileSchool">—</span>
+                    </div>
+                    <div
+                        style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)">
+                        <span style="color:var(--text-dim);font-size:13px;font-weight:700">Bölüm</span>
+                        <span style="font-weight:700;font-size:14px" id="profileDept">—</span>
+                    </div>
+                    <div
+                        style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)">
+                        <span style="color:var(--text-dim);font-size:13px;font-weight:700">Üyelik</span>
+                        <span id="profileSub"><span class="tag warning">Ücretsiz</span></span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:12px 0">
+                        <span style="color:var(--text-dim);font-size:13px;font-weight:700">Kayıt Tarihi</span>
+                        <span style="font-weight:700;font-size:14px" id="profileDate">—</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ SETTINGS ═══ -->
+        <div class="page" id="page-settings">
+            <h2 style="font-size:22px;font-weight:900;margin-bottom:20px">⚙️ Ayarlar</h2>
+            <div
+                style="background:var(--dark2);border:1px solid var(--border);border-radius:20px;padding:32px;max-width:520px">
+                <h3 style="font-size:16px;font-weight:800;margin-bottom:16px"><i class="bi bi-key"></i> Şifre Değiştir
+                </h3>
+                <div style="display:grid;gap:14px" id="passwordChangeForm">
+                    <div>
+                        <label
+                            style="font-size:12px;font-weight:700;color:var(--text-dim);margin-bottom:6px;display:block">Mevcut
+                            Şifre</label>
+                        <input type="password" id="currentPassword" class="form-input" placeholder="Mevcut şifreniz"
+                            style="width:100%;background:var(--dark);border:1px solid var(--border);color:#fff;padding:12px 16px;border-radius:10px;font-family:'Nunito',sans-serif">
+                    </div>
+                    <div>
+                        <label
+                            style="font-size:12px;font-weight:700;color:var(--text-dim);margin-bottom:6px;display:block">Yeni
+                            Şifre</label>
+                        <input type="password" id="newPassword" class="form-input" placeholder="En az 6 karakter"
+                            style="width:100%;background:var(--dark);border:1px solid var(--border);color:#fff;padding:12px 16px;border-radius:10px;font-family:'Nunito',sans-serif">
+                    </div>
+                    <div>
+                        <label
+                            style="font-size:12px;font-weight:700;color:var(--text-dim);margin-bottom:6px;display:block">Yeni
+                            Şifre Tekrar</label>
+                        <input type="password" id="confirmPassword" class="form-input"
+                            placeholder="Şifrenizi tekrar girin"
+                            style="width:100%;background:var(--dark);border:1px solid var(--border);color:#fff;padding:12px 16px;border-radius:10px;font-family:'Nunito',sans-serif">
+                    </div>
+                    <button id="changePwdBtn" class="btn-primary-custom" style="padding:12px;font-size:14px"><i
+                            class="bi bi-check-lg"></i> Şifreyi Güncelle</button>
+                </div>
+                <div id="passwordMsg" style="margin-top:12px;font-size:13px;font-weight:700"></div>
+            </div>
+            <div
+                style="background:var(--dark2);border:1px solid var(--border);border-radius:20px;padding:32px;max-width:520px;margin-top:20px">
+                <h3 style="font-size:16px;font-weight:800;margin-bottom:16px"><i class="bi bi-shield-check"></i> Hesap
+                    Bilgileri</h3>
+                <div
+                    style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)">
+                    <span style="color:var(--text-dim);font-size:13px;font-weight:700">E-posta</span>
+                    <span style="font-weight:700;font-size:14px" id="settingsEmail">—</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:12px 0">
+                    <span style="color:var(--text-dim);font-size:13px;font-weight:700">Kayıt Tarihi</span>
+                    <span style="font-weight:700;font-size:14px" id="settingsDate">—</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ FEEDBACK ═══ -->
+        <div class="page" id="page-feedback">
+            <h2 style="font-size:22px;font-weight:900;margin-bottom:20px">💬 Geri Bildirim</h2>
+            <div
+                style="background:var(--dark2);border:1px solid var(--border);border-radius:20px;padding:32px;max-width:600px">
+                <p style="color:var(--text-muted);font-size:14px;margin-bottom:20px">Platformumuz hakkında
+                    düşüncelerinizi, önerilerinizi veya karşılaştığınız sorunları bizimle paylaşın.</p>
+                <div style="display:grid;gap:14px" id="feedbackForm">
+                    <div>
+                        <label
+                            style="font-size:12px;font-weight:700;color:var(--text-dim);margin-bottom:6px;display:block">Konu</label>
+                        <select id="feedbackSubject" aria-label="Geri Bildirim Konusu"
+                            style="width:100%;background:var(--dark);border:1px solid var(--border);color:#fff;padding:12px 16px;border-radius:10px;font-family:'Nunito',sans-serif;cursor:pointer">
+                            <option value="oneri">Öneri</option>
+                            <option value="sorun">Sorun Bildirimi</option>
+                            <option value="soru">Soru</option>
+                            <option value="tesekkur">Teşekkür</option>
+                            <option value="diger">Diğer</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label
+                            style="font-size:12px;font-weight:700;color:var(--text-dim);margin-bottom:6px;display:block">Mesajınız</label>
+                        <textarea id="feedbackMessage" rows="5" placeholder="Mesajınızı buraya yazın..."
+                            style="width:100%;background:var(--dark);border:1px solid var(--border);color:#fff;padding:12px 16px;border-radius:10px;font-family:'Nunito',sans-serif;resize:vertical"></textarea>
+                    </div>
+                    <button id="submitFeedbackBtn" class="btn-primary-custom" style="padding:12px;font-size:14px"><i
+                            class="bi bi-send"></i> Gönder</button>
+                </div>
+                <div id="feedbackMsg" style="margin-top:12px;font-size:13px;font-weight:700"></div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="upgradeModal">
+        <div class="glass-modal"
+            style="background:rgba(20,25,40,0.95);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:32px;width:90%;max-width:480px;box-shadow:0 20px 40px rgba(0,0,0,0.5);position:relative;text-align:center">
+            <div style="font-size:48px;margin-bottom:16px">⏰</div>
+            <h2 style="font-size:24px;font-weight:900;margin-bottom:8px">Süreniz Doldu!</h2>
+            <p style="color:var(--text-muted);font-size:14px;margin-bottom:24px">Günlük ücretsiz kullanım
+                süreniz doldu. Sınırsız erişim için Premium'a geçin.</p>
+
+            <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px;text-align:left">
+                <div style="display:flex;align-items:center;gap:12px"><i class="bi bi-check-circle-fill"
+                        style="color:var(--secondary)"></i> <span>Sınırsız sınav çözümü</span></div>
+                <div style="display:flex;align-items:center;gap:12px"><i class="bi bi-check-circle-fill"
+                        style="color:var(--secondary)"></i> <span>Tüm çıkmış sorulara erişim</span></div>
+                <div style="display:flex;align-items:center;gap:12px"><i class="bi bi-check-circle-fill"
+                        style="color:var(--secondary)"></i> <span>Hatalı sorular havuzu</span></div>
+                <div style="display:flex;align-items:center;gap:12px"><i class="bi bi-check-circle-fill"
+                        style="color:var(--secondary)"></i> <span>Detaylı performans analizi</span></div>
+            </div>
+
+            <div
+                style="background:rgba(255,255,255,0.05);padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.1);margin-bottom:20px">
+                <div style="font-size:14px;color:var(--text-muted)">Aylık Sadece</div>
+                <div style="font-size:32px;font-weight:900;color:#fff;margin:4px 0" id="pwPrice">₺49.99</div>
+                <div style="font-size:12px;color:var(--text-dim)">İstediğin zaman iptal et.</div>
+            </div>
+
+            <!-- iyzico payment div -->
+            <div id="iyzicoFormContainer" style="display:none;margin-bottom:16px"></div>
+
+            <button class="btn-primary-custom" id="upgradePayBtn"
+                style="width:100%;padding:14px;font-size:16px;background:linear-gradient(135deg,#f9a826,#f77f00)">
+                <i class="bi bi-stars"></i> Premium'a Geç
+            </button>
+            <button id="closeModalBtn" class="btn-ghost" style="width:100%;margin-top:10px;padding:12px;font-size:14px">
+                <i class="bi bi-calendar-check"></i> Yarın Tekrar Dene
+            </button>
+        </div>
+    </div>
+
+    <!-- TOAST CONTAINER -->
+    <div id="toastContainer"
+        style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:2000;display:flex;flex-direction:column;gap:10px">
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = '/register.html';
+
+        const API = (p, o = {}) => {
+            const noModal = o.noModal;
+            o.headers = { ...o.headers, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
+            return fetch(p, o).then(r => {
+                if (r.status === 401) { localStorage.clear(); window.location.href = '/login.html'; }
+                if (r.status === 402) {
+                    if (!noModal) openUpgradeModal();
+                    throw new Error('Süre doldu');
+                }
+                return r.json();
+            });
+        };
+
+        let userData = null, schoolsData = null, myDepartment = null;
+        let liveSeconds = 600, liveUsed = 0, isUnlimited = false;
+        let quizQuestions = [], quizIdx = 0, quizCorrect = 0, quizWrong = 0, quizAnswered = false;
+        let allExams = [], activeTypeFilter = 'all', activeCourseFilter = '';
+        let upgradeModalAutoShown = false;
+
+        // ──── INIT ────
+        async function init() {
+            try {
+                const [me, schools, settings] = await Promise.all([
+                    API('/api/me'), API('/api/data/schools'), API('/api/data/settings')
+                ]);
+                userData = me; schoolsData = schools;
+                const school = schoolsData[me.user.school_key];
+                myDepartment = school?.departments[me.user.department_idx];
+
+                // Sidebar
+                const uniName = me.user.university_name || 'Üniversite Seçilmedi';
+                const deptName = me.user.department_name || 'Bölüm Seçilmedi';
+
+                document.getElementById('schoolLabel').textContent = uniName ? ' - ' + uniName : '';
+                const nm = me.user.name || me.user.email.split('@')[0];
+                document.getElementById('userName').textContent = nm;
+                document.getElementById('userMeta').textContent = deptName;
+                document.getElementById('userAvatar').textContent = nm.substring(0, 2).toUpperCase();
+
+                // Hero
+                document.getElementById('heroSchool').textContent = uniName;
+                document.getElementById('heroDept').textContent = deptName ? deptName + ' Sınavları' : 'Sınavlar';
+                document.getElementById('heroSubtitle').textContent = 'Bölümüne ait çıkmış soruları ve dersleri incele';
+
+                // Profile
+                document.getElementById('profileAvatar').textContent = nm.substring(0, 2).toUpperCase();
+                document.getElementById('profileName').textContent = me.user.name || '—';
+                document.getElementById('profileEmail').textContent = me.user.email;
+                document.getElementById('profileSchool').textContent = uniName;
+                document.getElementById('profileDept').textContent = deptName;
+                document.getElementById('profileSub').innerHTML = me.hasActiveSubscription ? '<span class="tag success">Premium</span>' : '<span class="tag warning">Ücretsiz</span>';
+                document.getElementById('profileDate').textContent = new Date(me.user.created_at).toLocaleDateString('tr-TR');
+
+                // Timer + Premium UI
+                isUnlimited = me.hasActiveSubscription;
+                liveSeconds = me.trialSeconds;
+                liveUsed = me.todayUsage;
+                if (isUnlimited) {
+                    document.getElementById('timerPill').style.display = 'none';
+                    document.getElementById('sidebarPremiumCard').style.display = 'none';
+                    document.getElementById('sidebarPremiumBadge').style.display = 'block';
+                } else {
+                    document.getElementById('sidebarPremiumCard').style.display = 'block';
+                    document.getElementById('sidebarPremiumBadge').style.display = 'none';
+                    updateLiveTimer();
+                    startLiveTimer();
+                    startUsageTick();
+                }
+
+                document.getElementById('pwPrice').textContent = `₺${settings.monthly_price || '49.99'}`;
+
+                // Settings page
+                document.getElementById('settingsEmail').textContent = me.user.email;
+                document.getElementById('settingsDate').textContent = new Date(me.user.created_at).toLocaleDateString('tr-TR');
+
+                // Check URL for payment callback
+                if (window.location.hash.includes('status=success')) {
+                    showToast('🎉 Premium aboneliğiniz aktif!', 'success');
+                    window.location.hash = '';
+                } else if (window.location.hash.includes('status=error')) {
+                    showToast('❌ Ödeme başarısız oldu.', 'danger');
+                    window.location.hash = '';
+                }
+
+                document.getElementById('upgradePayBtn')?.addEventListener('click', initIyzicoPayment);
+                document.getElementById('closeModalBtn')?.addEventListener('click', closeUpgradeModal);
+                document.getElementById('changePwdBtn')?.addEventListener('click', changePassword);
+                document.getElementById('submitFeedbackBtn')?.addEventListener('click', submitFeedback);
+
+                // Event delegation for dynamically created elements
+                document.getElementById('examCardsGrid')?.addEventListener('click', (e) => {
+                    const card = e.target.closest('.exam-card');
+                    if (card && card.dataset.examId) startExamQuiz(card.dataset.examId);
+                });
+                document.getElementById('optionsContainer')?.addEventListener('click', (e) => {
+                    const opt = e.target.closest('.quiz-option');
+                    if (opt && opt.dataset.idx) answerQuestion(parseInt(opt.dataset.idx));
+                });
+                document.getElementById('nextQuestionBtn')?.addEventListener('click', nextQuestion);
+                document.getElementById('quizRestartBtn')?.addEventListener('click', resetQuiz);
+
+                // Load exams
+                loadExams();
+                loadMistakeCount();
+            } catch (err) {
+                console.error('Init error:', err);
+            }
+        }
+
+        // ──── NAVIGATION ────
+        function showPage(name) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            const target = document.getElementById(`page-${name}`);
+            if (target) target.classList.add('active');
+            document.querySelectorAll('.nav-link-custom').forEach(l => {
+                l.classList.toggle('active', l.dataset.page === name);
+            });
+            closeSidebar();
+        }
+
+        // ──── SIDEBAR ────
+        document.getElementById('hamburgerBtn').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('sidebarOverlay').classList.toggle('show');
+        });
+        document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebarOverlay').classList.remove('show');
+        }
+
+        // ──── TOAST ────
+        function showToast(msg, type = 'info') {
+            const c = document.getElementById('toastContainer');
+            const t = document.createElement('div');
+            t.style.cssText = `padding:12px 24px;border-radius:12px;color:#fff;font-size:14px;font-weight:700;box-shadow:0 4px 12px rgba(0,0,0,0.3);animation:slideIn 0.3s ease;background:${type === 'warning' ? '#f59e0b' : type === 'danger' ? '#ef476f' : type === 'success' ? '#06d6a0' : '#4361ee'}`;
+            t.innerHTML = msg;
+            c.appendChild(t);
+            setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; setTimeout(() => t.remove(), 300); }, 4000);
+        }
+
+        // ──── UPGRADE MODAL ────
+        function openUpgradeModal() { document.getElementById('upgradeModal').style.display = 'flex'; }
+        function closeUpgradeModal() { document.getElementById('upgradeModal').style.display = 'none'; }
+
+        // ──── TIMER ────
+        let warning2MinShown = false, warning1MinShown = false;
+        function formatT(s) { return `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`; }
+        function updateLiveTimer() {
+            const rem = Math.max(0, liveSeconds - liveUsed);
+            const txt = formatT(rem);
+            document.getElementById('timerText').textContent = txt;
+            if (rem === 120 && !warning2MinShown) { warning2MinShown = true; showToast('⚠️ Sadece 2 dakika kaldı!', 'warning'); }
+            if (rem <= 60 && !warning1MinShown && rem > 0) { warning1MinShown = true; showToast('🚨 Son 1 dakika!', 'danger'); }
+            const pill = document.getElementById('timerPill');
+            pill.classList.remove('warning', 'expired');
+            if (rem <= 0) {
+                pill.classList.add('expired');
+                if (!upgradeModalAutoShown && !isUnlimited) {
+                    openUpgradeModal();
+                    upgradeModalAutoShown = true;
+                }
+            }
+            else if (rem <= 120) pill.classList.add('warning');
+        }
+        function startLiveTimer() { setInterval(() => { if (!isUnlimited && liveUsed < liveSeconds) { liveUsed++; updateLiveTimer(); } }, 1000); }
+        let usageTickInt;
+        function startUsageTick() {
+            if (usageTickInt) clearInterval(usageTickInt);
+            usageTickInt = setInterval(async () => {
+                if (isUnlimited) return;
+                if (liveUsed >= liveSeconds) {
+                    clearInterval(usageTickInt);
+                    return;
+                }
+                try { await API('/api/usage/tick', { method: 'POST', noModal: true }); }
+                catch (e) {
+                    if (e.message === 'Süre doldu') {
+                        liveUsed = liveSeconds; // Align frontend state
+                        updateLiveTimer();
+                        clearInterval(usageTickInt);
+                        if (!upgradeModalAutoShown) {
+                            openUpgradeModal();
+                            upgradeModalAutoShown = true;
+                        }
+                    }
+                }
+            }, 30000);
+        }
+
+        // ──── EXAM CARDS ────
+        const examColors = ['#4361ee', '#06d6a0', '#ef476f', '#f9a826', '#7b2fbe', '#00b4d8', '#ff6b6b', '#48bfe3', '#e77f67', '#38b000'];
+        const typeColors = {
+            'Vize': { bg: 'rgba(67,97,238,0.15)', color: '#4361ee' },
+            'Final': { bg: 'rgba(239,71,111,0.15)', color: '#ef476f' },
+            'Bütünleme': { bg: 'rgba(249,168,38,0.15)', color: '#f9a826' },
+            'Deneme': { bg: 'rgba(6,214,160,0.15)', color: '#06d6a0' },
+            'Çıkmış Sorular': { bg: 'rgba(123,47,190,0.15)', color: '#7b2fbe' }
+        };
+        const examIcons = ['📄', '📋', '🔬', '📝', '📊', '🧪', '📚', '🔖', '🎯', '💡'];
+
+        async function loadExams() {
+            try {
+                allExams = await API('/api/data/exams');
+                const courses = [...new Set(allExams.map(e => e.course_name))].sort();
+                const sel = document.getElementById('examCourseFilter');
+                sel.innerHTML = '<option value="">Tüm Dersleri Göster</option>' + courses.map(c => `<option value="${c}">${c}</option>`).join('');
+                renderExamCards();
+            } catch (e) {
+                document.getElementById('examCardsGrid').innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-dim);grid-column:1/-1"><p>Sınav verileri yüklenemedi.</p></div>';
+            }
+        }
+
+        function filterExams(type, btn) {
+            activeTypeFilter = type;
+            document.querySelectorAll('.exam-filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderExamCards();
+        }
+        function filterExamsByCourse() {
+            activeCourseFilter = document.getElementById('examCourseFilter').value;
+            renderExamCards();
+        }
+
+        function detectExamType(exam) {
+            const c = `${exam.type || ''} ${exam.year || ''} ${exam.term || ''}`.toLowerCase();
+            if (c.includes('vize')) return 'Vize';
+            if (c.includes('final')) return 'Final';
+            if (c.includes('büt')) return 'Bütünleme';
+            if (c.includes('deneme')) return 'Deneme';
+            return 'Çıkmış Sorular';
+        }
+
+        function renderExamCards() {
+            let filtered = allExams;
+            if (activeTypeFilter !== 'all') {
+                filtered = filtered.filter(e => {
+                    const c = `${e.type || ''} ${e.year || ''} ${e.term || ''}`.toLowerCase();
+                    return c.includes(activeTypeFilter.toLowerCase());
+                });
+            }
+            if (activeCourseFilter) filtered = filtered.filter(e => e.course_name === activeCourseFilter);
+
+            if (!filtered.length) {
+                document.getElementById('examCardsGrid').innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--text-dim);grid-column:1/-1"><div style="font-size:40px;margin-bottom:12px">🔍</div><p>Bu filtrelere uygun sınav bulunamadı.</p></div>';
+                return;
+            }
+
+            const colorMap = {};
+            let ci = 0;
+            filtered.forEach(e => { if (!colorMap[e.course_name]) { colorMap[e.course_name] = examColors[ci++ % examColors.length]; } });
+
+            document.getElementById('examCardsGrid').innerHTML = filtered.map((e, i) => {
+                const bc = colorMap[e.course_name];
+                const icon = examIcons[Object.keys(colorMap).indexOf(e.course_name) % examIcons.length];
+                const typeName = detectExamType(e);
+                const tc = typeColors[typeName] || typeColors['Çıkmış Sorular'];
+
+                let y = e.year || ''; if (y.toLowerCase() === 'bilinmiyor') y = '';
+                let t = e.term || ''; if (t.toLowerCase() === 'bilinmiyor') t = '';
+                const termInfo = `${y} ${t}`.trim();
+                const title = termInfo ? `${termInfo} - ${e.type || typeName}` : (e.type || 'Çıkmış Sorular');
+
+                return `<div class="exam-card" data-exam-id="${e.id}" style="border-left-color:${bc};animation-delay:${i * 0.03}s">
+                    <div class="ec-icon">${icon}</div>
+                    <div class="ec-content-wrap">
+                        <div class="ec-course">${e.course_name}</div>
+                        <div class="ec-title">${title}</div>
+                        <div class="ec-meta">
+                            <span class="ec-badge" style="background:${tc.bg};color:${tc.color}">${typeName}</span>
+                            <span class="ec-count">${e.question_count} Soru</span>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        // ──── COURSES (DERSLER) ────
+        let activeCourseTermFilter = 'all';
+
+        function filterCourses(term, btn) {
+            activeCourseTermFilter = term;
+            document.querySelectorAll('#courseTermFilters .exam-filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderCourses();
+        }
+
+        function renderCourses() {
+            const cMap = {};
+            const terms = new Set();
+            allExams.forEach(e => {
+                let y = e.year || '';
+                let t = e.term || '';
+                if (y.toLowerCase() === 'bilinmiyor') y = '';
+                if (t.toLowerCase() === 'bilinmiyor') t = '';
+
+                if (!cMap[e.course_name]) {
+                    cMap[e.course_name] = {
+                        name: e.course_name,
+                        year: y,
+                        term: t,
+                        exams: []
+                    };
+                }
+                cMap[e.course_name].exams.push(e);
+                const termStr = `${y} ${t}`.trim();
+                if (termStr) terms.add(termStr);
+            });
+
+            const filterContainer = document.getElementById('courseTermFilters');
+            if (terms.size > 0 && filterContainer.children.length === 1) {
+                Array.from(terms).sort().forEach(t => {
+                    const b = document.createElement('button');
+                    b.className = 'exam-filter-btn';
+                    b.textContent = t;
+                    b.onclick = () => filterCourses(t, b);
+                    filterContainer.appendChild(b);
+                });
+            }
+
+            let courseList = Object.values(cMap);
+            if (activeCourseTermFilter !== 'all') {
+                courseList = courseList.filter(c => `${c.year} ${c.term}`.trim() === activeCourseTermFilter);
+            }
+
+            const grid = document.getElementById('coursesCardsGrid');
+            if (!courseList.length) {
+                grid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-dim);grid-column:1/-1"><p>Bu döneme ait ders bulunamadı.</p></div>';
+                return;
+            }
+
+            const getIcon = (idx) => examIcons[idx % examIcons.length];
+
+            grid.innerHTML = courseList.map((c, i) => {
+                const termStr = `${c.year} ${c.term}`.trim();
+                return `
+                    <div class="course-card" onclick="showCourseExams('${c.name.replace(/'/g, "\\'")}')" style="animation-delay:${i * 0.05}s">
+                        <div class="cc-year">${termStr || 'Genel'}</div>
+                        <div class="cc-icon">${getIcon(i)}</div>
+                        <h3 class="cc-title">${c.name}</h3>
+                        <p class="cc-desc">${c.exams.length} adet sınav içeriyor. Çıkmış soruları ve denemeleri çözmek için tıkla.</p>
+                        <div class="cc-meta">
+                            <span class="tag" style="background:rgba(255,255,255,0.05)">${c.exams.length} Sınav</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showCourseExams(courseName) {
+            document.getElementById('detailCourseTitle').textContent = courseName;
+            const examsForCourse = allExams.filter(e => e.course_name === courseName);
+            const tbody = document.getElementById('courseExamsList');
+
+            tbody.innerHTML = examsForCourse.map(e => {
+                const typeName = detectExamType(e);
+                let y = e.year || ''; if (y.toLowerCase() === 'bilinmiyor') y = '';
+                let t = e.term || ''; if (t.toLowerCase() === 'bilinmiyor') t = '';
+                const termInfo = `${y} ${t}`.trim();
+                const title = termInfo ? `${termInfo} - ${e.type || typeName}` : (e.type || 'Deneme Sınavı');
+                const tc = typeColors[typeName] || typeColors['Çıkmış Sorular'];
+
+                return `
+                    <tr>
+                        <td>
+                            <div style="font-weight:800;color:#fff">${title}</div>
+                            <div style="font-size:12px;color:var(--text-dim);margin-top:4px">${e.question_count} Soru</div>
+                        </td>
+                        <td>
+                            <span class="tag" style="background:${tc.bg};color:${tc.color};border-radius:6px;padding:4px 8px;font-size:11px">${typeName}</span>
+                        </td>
+                        <td style="text-align:right">
+                            <button class="btn-primary-custom" onclick="startExamQuiz('${e.id}')" style="padding:6px 12px;font-size:12px;border-radius:8px">
+                                Başlat <i class="bi bi-play-fill" style="margin-left:4px"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            showPage('course-detail');
+        }
+
+        // ──── QUIZ ────
+        async function startExamQuiz(examId) {
+            quizQuestions = await API(`/api/quiz/exam/${examId}`);
+            if (!quizQuestions.length) { showToast('Bu sınavda soru bulunamadı.', 'warning'); return; }
+            quizIdx = 0; quizCorrect = 0; quizWrong = 0;
+            showPage('quiz');
+            document.getElementById('quizActive').style.display = 'block';
+            document.getElementById('quizResult').style.display = 'none';
+            document.getElementById('qTotal').textContent = quizQuestions.length;
+            showQuestion();
+        }
+
+        function showQuestion() {
+            quizAnswered = false;
+            const q = quizQuestions[quizIdx];
+            document.getElementById('qNum').textContent = quizIdx + 1;
+            document.getElementById('quizProgressFill').style.width = `${(quizIdx / quizQuestions.length) * 100}%`;
+            document.getElementById('questionText').textContent = q.question_text;
+            document.getElementById('explanationArea').innerHTML = '';
+            document.getElementById('nextQuestionBtn').style.display = 'none';
+            document.getElementById('qCorrectTag').textContent = `✓ ${quizCorrect}`;
+            document.getElementById('qWrongTag').textContent = `✗ ${quizWrong}`;
+            document.getElementById('optionsContainer').innerHTML = q.options.map((opt, i) =>
+                `<div class="quiz-option" data-idx="${i}"><div class="opt-letter">${letters[i]}</div><span>${opt}</span></div>`
+            ).join('');
+        }
+
+        async function answerQuestion(idx) {
+            if (quizAnswered) return;
+            quizAnswered = true;
+            const q = quizQuestions[quizIdx];
+            document.querySelectorAll('.quiz-option').forEach(o => o.classList.add('disabled'));
+
+            let res;
+            try {
+                res = await API('/api/quiz/answer', { method: 'POST', body: JSON.stringify({ question_id: q.id, selected_idx: idx }) });
+            } catch (err) {
+                if (err.message === 'Süre doldu') return; // Modal is opened by API
+                showToast('Hata oluştu, cevap kaydedilemedi.', 'danger');
+                return;
+            }
+
+            const selected = document.querySelector(`.quiz-option[data-idx="${idx}"]`);
+            const correctEl = document.querySelector(`.quiz-option[data-idx="${res.correct_idx}"]`);
+
+            if (res.correct) { selected.classList.add('quiz-correct'); quizCorrect++; spawnConfetti(selected); }
+            else { selected.classList.add('quiz-wrong'); correctEl.classList.add('quiz-highlight'); quizWrong++; }
+
+            document.getElementById('qCorrectTag').textContent = `✓ ${quizCorrect}`;
+            document.getElementById('qWrongTag').textContent = `✗ ${quizWrong}`;
+            if (res.explanation) document.getElementById('explanationArea').innerHTML = `<div class="explanation-box"><i class="bi bi-lightbulb" style="color:var(--secondary)"></i> ${res.explanation}</div>`;
+            document.getElementById('nextQuestionBtn').style.display = 'inline-flex';
+        }
+
+        function spawnConfetti(el) {
+            const rect = el.getBoundingClientRect();
+            const colors = ['#06d6a0', '#4361ee', '#ffd166', '#ef476f', '#fff'];
+            for (let i = 0; i < 12; i++) {
+                const p = document.createElement('div');
+                p.className = 'confetti-particle';
+                p.style.left = `${rect.left + rect.width / 2 + Math.random() * 40 - 20}px`;
+                p.style.top = `${rect.top + Math.random() * 20}px`;
+                p.style.background = colors[Math.floor(Math.random() * colors.length)];
+                p.style.width = p.style.height = `${4 + Math.random() * 6}px`;
+                document.body.appendChild(p);
+                setTimeout(() => p.remove(), 900);
+            }
+        }
+
+        function nextQuestion() {
+            quizIdx++;
+            if (quizIdx >= quizQuestions.length) { showQuizResult(); return; }
+            showQuestion();
+        }
+
+        function showQuizResult() {
+            document.getElementById('quizActive').style.display = 'none';
+            document.getElementById('quizResult').style.display = 'block';
+            const total = quizCorrect + quizWrong;
+            const rate = total > 0 ? Math.round((quizCorrect / total) * 100) : 0;
+            document.getElementById('resCorrect').textContent = quizCorrect;
+            document.getElementById('resWrong').textContent = quizWrong;
+            document.getElementById('resRate').textContent = `%${rate}`;
+            document.getElementById('quizProgressFill').style.width = '100%';
+            if (rate >= 70) { document.getElementById('resultEmoji').textContent = '🎉'; document.getElementById('resultTitle').textContent = 'Tebrikler!'; }
+            else if (rate >= 50) { document.getElementById('resultEmoji').textContent = '💪'; document.getElementById('resultTitle').textContent = 'İyi Gidiyorsun!'; }
+            else { document.getElementById('resultEmoji').textContent = '📚'; document.getElementById('resultTitle').textContent = 'Biraz Daha Çalışmalısın'; }
+            document.getElementById('resultText').textContent = `${total} sorudan ${quizCorrect} tanesini doğru cevapladın.`;
+        }
+
+        function resetQuiz() {
+            showPage('exams');
+        }
+
+        // ──── MISTAKES ────
+        async function loadMistakeCount() {
+            try {
+                const mistakes = await API('/api/quiz/mistakes');
+                document.getElementById('mistakeCount').textContent = mistakes.length;
+            } catch (e) { }
+        }
+
+        async function loadMistakes() {
+            const mistakes = await API('/api/quiz/mistakes');
+            document.getElementById('mistakeCount').textContent = mistakes.length;
+            if (!mistakes.length) {
+                document.getElementById('mistakesList').innerHTML = '<p style="color:var(--text-dim);text-align:center;padding:40px">Henüz hatalı sorun yok! 🎉</p>';
+                return;
+            }
+            const letters = ['A', 'B', 'C', 'D', 'E'];
+            document.getElementById('mistakesList').innerHTML = mistakes.map((m, i) => `
+                <div class="mistake-item" style="animation-delay:${i * 0.05}s">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span class="tag primary">${m.course_name}</span><span style="font-size:11px;color:var(--text-dim)">${new Date(m.answered_at).toLocaleDateString('tr-TR')}</span></div>
+                    <p style="font-size:14px;font-weight:600;margin-bottom:10px">${m.question_text}</p>
+                    <div style="display:flex;flex-wrap:wrap;gap:6px">${m.options.map((o, j) => `<span style="font-size:12px;padding:4px 10px;border-radius:8px;background:${j === m.correct_idx ? 'var(--secondary-soft)' : j === m.selected_idx ? 'var(--danger-soft)' : 'rgba(255,255,255,0.04)'};color:${j === m.correct_idx ? 'var(--secondary)' : j === m.selected_idx ? 'var(--danger)' : 'var(--text-dim)'}">${letters[j]}) ${o}</span>`).join('')}</div>
+                </div>
+            `).join('');
+        }
+
+        async function startMistakeReview() {
+            quizQuestions = await API('/api/quiz/mistakes/review?limit=10');
+            if (!quizQuestions.length) { showToast('Tekrar edilecek hatalı soru yok!', 'warning'); return; }
+            quizIdx = 0; quizCorrect = 0; quizWrong = 0;
+            showPage('quiz');
+            document.getElementById('quizActive').style.display = 'block';
+            document.getElementById('quizResult').style.display = 'none';
+            document.getElementById('qTotal').textContent = quizQuestions.length;
+            showQuestion();
+        }
+
+        // ──── PASSWORD CHANGE ────
+        async function changePassword() {
+            const cur = document.getElementById('currentPassword').value;
+            const nw = document.getElementById('newPassword').value;
+            const cnf = document.getElementById('confirmPassword').value;
+            const msg = document.getElementById('passwordMsg');
+            if (!cur || !nw || !cnf) { msg.innerHTML = '<span style="color:var(--danger)">Tüm alanları doldurun.</span>'; return; }
+            if (nw.length < 6) { msg.innerHTML = '<span style="color:var(--danger)">Yeni şifre en az 6 karakter olmalı.</span>'; return; }
+            if (nw !== cnf) { msg.innerHTML = '<span style="color:var(--danger)">Yeni şifreler eşleşmiyor.</span>'; return; }
+            try {
+                const res = await API('/api/user/change-password', { method: 'POST', body: JSON.stringify({ currentPassword: cur, newPassword: nw }) });
+                if (res.error) { msg.innerHTML = `<span style="color:var(--danger)">${res.error}</span>`; return; }
+                msg.innerHTML = '<span style="color:var(--secondary)">✓ Şifre başarıyla güncellendi!</span>';
+                document.getElementById('currentPassword').value = '';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
+            } catch (e) { msg.innerHTML = '<span style="color:var(--danger)">Bir hata oluştu.</span>'; }
+        }
+
+        // ──── FEEDBACK ────
+        async function submitFeedback() {
+            const subject = document.getElementById('feedbackSubject').value;
+            const message = document.getElementById('feedbackMessage').value;
+            const msg = document.getElementById('feedbackMsg');
+            if (!message.trim()) { msg.innerHTML = '<span style="color:var(--danger)">Lütfen mesajınızı yazın.</span>'; return; }
+            try {
+                const res = await API('/api/feedback', { method: 'POST', body: JSON.stringify({ subject, message }) });
+                if (res.error) { msg.innerHTML = `<span style="color:var(--danger)">${res.error}</span>`; return; }
+                msg.innerHTML = '<span style="color:var(--secondary)">✓ Geri bildiriminiz gönderildi. Teşekkürler!</span>';
+                document.getElementById('feedbackMessage').value = '';
+            } catch (e) { msg.innerHTML = '<span style="color:var(--danger)">Bir hata oluştu.</span>'; }
+        }
+
+        // ──── IYZICO PAYMENT ────
+        async function initIyzicoPayment() {
+            const btn = document.getElementById('upgradePayBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Yükleniyor...';
+            try {
+                const res = await API('/api/payment/initialize', { method: 'POST' });
+                if (res.checkoutFormContent) {
+                    const container = document.getElementById('iyzicoFormContainer');
+                    container.style.display = 'block';
+                    container.innerHTML = res.checkoutFormContent;
+                    btn.style.display = 'none';
+                    // iyzico injects its own scripts here
+                } else {
+                    showToast('Ödeme formu oluşturulamadı.', 'danger');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-stars"></i> Premium\'a Geç';
+                }
+            } catch (e) {
+                showToast('Ödeme başlatılamadı: ' + e.message, 'danger');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-stars"></i> Premium\'a Geç';
+            }
+        }
+
+        // ──── QUIZ: Block on expired ────
+        const origStartExamQuiz = startExamQuiz;
+        startExamQuiz = async function (examId) {
+            if (!isUnlimited && liveUsed >= liveSeconds) {
+                openUpgradeModal();
+                return;
+            }
+            return origStartExamQuiz(examId);
+        };
+
+        const origStartMistakeReview = startMistakeReview;
+        startMistakeReview = async function () {
+            if (!isUnlimited && liveUsed >= liveSeconds) {
+                openUpgradeModal();
+                return;
+            }
+            return origStartMistakeReview();
+        };
+
+        // ──── LOGOUT ────
+        function logout() { localStorage.clear(); window.location.href = '/login.html'; }
+
+        // ──── GO ────
+        init();
+    </script>
+</body>
+
+</html>

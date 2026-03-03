@@ -1,0 +1,36 @@
+{
+  "name": "meddoc",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server-v2.js",
+  "scripts": {
+    "start": "node server-v2.js",
+    "dev": "node server-v2.js",
+    "build": "cd admin-panel && npm install && npm run build",
+    "test": "echo \"No tests\" && exit 0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "axios": "^1.13.6",
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.6.2",
+    "cheerio": "^1.2.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^4.22.1",
+    "express-rate-limit": "^8.2.1",
+    "helmet": "^8.1.0",
+    "iyzipay": "^2.0.65",
+    "jsonwebtoken": "^9.0.3",
+    "node-cron": "^4.2.1",
+    "nodemailer": "^8.0.1",
+    "pdfkit": "^0.17.2",
+    "pg": "^8.19.0",
+    "redis": "^5.11.0",
+    "serverless-http": "^4.0.0",
+    "zod": "^4.3.6"
+  }
+}

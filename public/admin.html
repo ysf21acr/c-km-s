@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yönetim Paneli — MedDoc Akademi</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+
+<body>
+    <!-- SIDEBAR -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon" style="background:linear-gradient(135deg,#ef476f,#f97316)">⚙️</div>
+            <div class="brand-text">
+                Yönetim Paneli
+                <small>MedDoc Akademi</small>
+            </div>
+        </div>
+
+        <div class="nav-section-title">Yönetim</div>
+        <a class="nav-link-custom active" data-page="dashboard" onclick="showPage('dashboard')">
+            <i class="bi bi-speedometer2 icon"></i> Dashboard
+        </a>
+        <a class="nav-link-custom" data-page="settings" onclick="showPage('settings')">
+            <i class="bi bi-gear icon"></i> Ayarlar
+        </a>
+        <a class="nav-link-custom" data-page="users" onclick="showPage('users')">
+            <i class="bi bi-people icon"></i> Kullanıcılar
+        </a>
+        <a class="nav-link-custom" data-page="messages" onclick="showPage('messages')">
+            <i class="bi bi-envelope icon"></i> Mesajlar
+        </a>
+        <a class="nav-link-custom" data-page="scraper" onclick="showPage('scraper')">
+            <i class="bi bi-cloud-download icon"></i> Scraper
+        </a>
+        <a class="nav-link-custom" data-page="data" onclick="showPage('data')">
+            <i class="bi bi-database icon"></i> Veri
+        </a>
+
+        <div class="nav-section-title">Diğer</div>
+        <a class="nav-link-custom" href="/" target="_blank">
+            <i class="bi bi-box-arrow-up-right icon"></i> Siteyi Aç
+        </a>
+        <a class="nav-link-custom" onclick="logout()" style="color:var(--danger)">
+            <i class="bi bi-box-arrow-left icon"></i> Çıkış Yap
+        </a>
+    </aside>
+
+    <div class="main-content">
+        <div class="topbar">
+            <div class="topbar-left">
+                <button class="hamburger" id="hamburgerBtn"><i class="bi bi-list"></i></button>
+                <div class="topbar-title"><i class="bi bi-shield-lock" style="color:var(--danger)"></i> <strong>Admin
+                        Panel</strong></div>
+            </div>
+            <div class="topbar-actions">
+                <span class="tag danger">Admin</span>
+            </div>
+        </div>
+
+        <!-- DASHBOARD -->
+        <div class="page active" id="page-dashboard">
+            <div class="hero-section" style="background:linear-gradient(135deg,#1a0a2e 0%,#0d1b35 40%,#0f2535 100%)">
+                <div class="hero-eyebrow"><i class="bi bi-shield-check"></i> Yönetim Paneli</div>
+                <h1>Platform Kontrol Merkezi</h1>
+                <p>Kullanıcıları yönet, ayarları düzenle, platformu kontrol et.</p>
+            </div>
+
+            <div class="stat-grid" id="statsGrid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:var(--primary-soft);color:var(--primary)"><i
+                            class="bi bi-people-fill"></i></div>
+                    <div class="stat-num" id="statUsers">—</div>
+                    <div class="stat-label">Toplam Kullanıcı</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:var(--secondary-soft);color:var(--secondary)"><i
+                            class="bi bi-credit-card-2-front"></i></div>
+                    <div class="stat-num" id="statSubs">—</div>
+                    <div class="stat-label">Aktif Üyelik</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:var(--warning-soft);color:var(--warning)"><i
+                            class="bi bi-calendar-week"></i></div>
+                    <div class="stat-num" id="stat7d">—</div>
+                    <div class="stat-label">Son 7 Gün Kayıt</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:var(--danger-soft);color:var(--danger)"><i
+                            class="bi bi-pencil-square"></i></div>
+                    <div class="stat-num" id="statSessions">—</div>
+                    <div class="stat-label">Test Oturumu</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SETTINGS -->
+        <div class="page" id="page-settings">
+            <h2 style="font-size:22px;font-weight:900;margin-bottom:6px">⚙️ Platform Ayarları</h2>
+            <p style="color:var(--text-muted);font-size:14px;margin-bottom:24px">Üyelik, fiyat ve deneme süresi
+                ayarlarını düzenleyin.</p>
+
+            <div style="background:var(--dark2);border:1px solid var(--border);border-radius:16px;max-width:600px">
+                <div class="setting-row">
+                    <div>
+                        <div class="setting-label">Günlük Ücretsiz Süre</div>
+                        <div class="setting-desc">Saniye cinsinden (600 = 10 dakika)</div>
+                    </div>
+                    <input type="number" id="set_trial_seconds" value="600">
+                </div>
+                <div class="setting-row">
+                    <div>
+                        <div class="setting-label">Aylık Üyelik Fiyatı</div>
+                        <div class="setting-desc">TL cinsinden</div>
+                    </div>
+                    <input type="text" id="set_monthly_price" value="49.99">
+                </div>
+                <div class="setting-row">
+                    <div>
+                        <div class="setting-label">Para Birimi</div>
+                        <div class="setting-desc">Gösterim birimi</div>
+                    </div>
+                    <input type="text" id="set_currency" value="TL">
+                </div>
+                <div class="setting-row">
+                    <div>
+                        <div class="setting-label">Site Adı</div>
+                        <div class="setting-desc">Platform ismi</div>
+                    </div>
+                    <input type="text" id="set_site_name" value="MedDoc Akademi" style="width:180px">
+                </div>
+            </div>
+
+            <button class="btn-primary-custom" style="margin-top:20px" onclick="saveSettings()">
+                <i class="bi bi-check-lg"></i> Ayarları Kaydet
+            </button>
+            <span id="settingsSaved"
+                style="color:var(--secondary);font-size:13px;font-weight:700;margin-left:14px;display:none">✓
+                Kaydedildi</span>
+        </div>
+
+        <!-- USERS -->
+        <div class="page" id="page-users">
+            <h2 style="font-size:22px;font-weight:900;margin-bottom:6px">👥 Kullanıcı Yönetimi</h2>
+            <p style="color:var(--text-muted);font-size:14px;margin-bottom:20px">Kayıtlı kullanıcıları görüntüle ve
+                üyelik yönet.</p>
+
+            <div class="search-bar" style="max-width:400px">
+                <i class="bi bi-search"></i>
+                <input type="text" id="userSearch" placeholder="E-posta veya isim ara...">
+            </div>
+
+            <div style="overflow-x:auto">
+                <table class="data-table" id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>E-posta</th>
+                            <th>Ad</th>
+                            <th>Okul</th>
+                            <th>Üyelik</th>
+                            <th>Kayıt</th>
+                            <th>İşlem</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersBody"></tbody>
+                </table>
+            </div>
+
+            <div
+                style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;font-size:13px;color:var(--text-muted)">
+                <span id="usersPagination">Sayfa 1/1</span>
+                <div style="display:flex;gap:8px">
+                    <button class="btn-ghost" style="padding:6px 14px;font-size:12px" id="prevPageBtn"
+                        onclick="changePage(-1)">← Önceki</button>
+                    <button class="btn-ghost" style="padding:6px 14px;font-size:12px" id="nextPageBtn"
+                        onclick="changePage(1)">Sonraki →</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MESSAGES -->
+        <div class="page" id="page-messages">
+            <h2 style="font-size:22px;font-weight:900;margin-bottom:6px">✉️ İletişim & Geri Bildirim</h2>
+            <p style="color:var(--text-muted);font-size:14px;margin-bottom:20px">Kullanıcılardan gelen mesajlar ve hata
+                bildirimleri.</p>
+
+            <div style="overflow-x:auto">
+                <table class="data-table" id="messagesTable">
+                    <thead>
+                        <tr>
+                            <th>Tarih</th>
+                            <th>Gönderen</th>
+                            <th>Konu</th>
+                            <th>Mesaj</th>
+                            <th>Durum</th>
+                            <th>İşlem</th>
+                        </tr>
+                    </thead>
+                    <tbody id="messagesBody"></tbody>
+                </table>
+            </div>
+
+            <div
+                style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;font-size:13px;color:var(--text-muted)">
+                <span id="messagesPagination">Sayfa 1/1</span>
+                <div style="display:flex;gap:8px">
+                    <button class="btn-ghost" style="padding:6px 14px;font-size:12px" id="prevMsgBtn"
+                        onclick="changeMsgPage(-1)">← Önceki</button>
+                    <button class="btn-ghost" style="padding:6px 14px;font-size:12px" id="nextMsgBtn"
+                        onclick="changeMsgPage(1)">Sonraki →</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCRAPER -->
+        <div class="page" id="page-scraper">
+            <h2 style="font-size:22px;font-weight:900;margin-bottom:6px">📥 Veri Çekme (Scraper)</h2>
+            <p style="color:var(--text-muted);font-size:14px;margin-bottom:24px">Yeni üniversite veya sınav içeriklerini
+                çekin.</p>
+
+            <div
+                style="background:var(--dark2);border:1px solid var(--border);border-radius:16px;padding:24px;max-width:800px;margin-bottom:24px">
+                <h3 style="font-size:16px;margin-bottom:16px">Yeni Kaynak Ekle</h3>
+                <div class="setting-row" style="border:none;padding:0;margin-bottom:16px">
+                    <div style="flex:1">
+                        <select id="scraperUniv" class="form-input" style="width:100%;margin-bottom:8px">
+                            <option value="AUZEF">AUZEF (Lolonolo)</option>
+                            <option value="ANADOLU_AOF">Anadolu AÖF (Lolonolo)</option>
+                            <option value="ATATURK_AOF">Atatürk AÖF (Lolonolo)</option>
+                        </select>
+                        <input type="text" id="scraperUrl" class="form-input" style="width:100%"
+                            placeholder="https://lolonolo.com/auzef/bolum-adi/">
+                    </div>
+                </div>
+                <button class="btn-primary-custom" id="startScraperBtn" onclick="startScraping()">
+                    <i class="bi bi-cloud-arrow-down"></i> Veri Çekmeyi Başlat
+                </button>
+                <div id="scraperStatus"
+                    style="margin-top:16px;display:none;padding:12px;background:rgba(67,97,238,0.1);border-radius:8px;border:1px solid rgba(67,97,238,0.2)">
+                    <div style="font-size:13px;font-weight:600;color:var(--primary);margin-bottom:8px">Durum: <span
+                            id="scraperStatusText">İşleniyor...</span></div>
+                    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#a8b0d0;max-height:150px;overflow-y:auto"
+                        id="scraperLogs"></div>
+                </div>
+            </div>
+
+            <h3 style="font-size:16px;margin-bottom:16px">Önceki Scraper Görevleri</h3>
+            <div style="overflow-x:auto">
+                <table class="data-table" id="scraperJobsTable">
+                    <thead>
+                        <tr>
+                            <th>Tarih</th>
+                            <th>Üniversite</th>
+                            <th>Bağlantı</th>
+                            <th>Durum</th>
+                            <th>İşlenen</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scraperJobsBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- DATA -->
+        <div class="page" id="page-data">
+            <h2 style="font-size:22px;font-weight:900;margin-bottom:6px">📊 Veri İstatistikleri</h2>
+            <p style="color:var(--text-muted);font-size:14px;margin-bottom:24px">Platformdaki okul, bölüm ve ders
+                verileri</p>
+
+            <div class="stat-grid" id="dataStats"></div>
+
+            <div id="dataDetails" style="margin-top:20px"></div>
+        </div>
+    </div>
+
+    <!-- SUBSCRIPTION MODAL -->
+    <div class="modal-overlay" id="subModal">
+        <div class="modal-content">
+            <h3 id="subModalTitle">Üyelik Yönet</h3>
+            <div id="subModalBody"></div>
+            <div style="display:flex;gap:10px;margin-top:20px">
+                <button class="btn-ghost" style="flex:1" onclick="closeModal()">İptal</button>
+                <button class="btn-success" style="flex:1" id="subModalAction"
+                    onclick="executeSubAction()">Onayla</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        if (!token || user.role !== 'admin') {
+            window.location.href = '/login.html';
+        }
+
+        const API = (path, opts = {}) => {
+            opts.headers = { ...opts.headers, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
+            return fetch(path, opts).then(r => {
+                if (r.status === 401 || r.status === 403) { localStorage.clear(); window.location.href = '/login.html'; }
+                return r.json();
+            });
+        };
+
+        let currentPage = 1;
+        let currentMsgPage = 1;
+        let currentSearch = '';
+        let schoolsData = null;
+        let subActionData = null;
+
+        // ──── INIT ────
+        async function init() {
+            await Promise.all([loadStats(), loadSettings(), loadUsers(), loadMessages(), loadScraperJobs(), loadDataPage()]);
+        }
+
+        async function loadStats() {
+            const stats = await API('/api/admin/stats');
+            document.getElementById('statUsers').textContent = stats.totalUsers;
+            document.getElementById('statSubs').textContent = stats.activeSubscriptions;
+            document.getElementById('stat7d').textContent = stats.last7DaysRegistrations;
+            document.getElementById('statSessions').textContent = stats.totalQuizSessions;
+        }
+
+        async function loadSettings() {
+            const settings = await API('/api/admin/settings');
+            document.getElementById('set_trial_seconds').value = settings.trial_seconds || '600';
+            document.getElementById('set_monthly_price').value = settings.monthly_price || '49.99';
+            document.getElementById('set_currency').value = settings.currency || 'TL';
+            document.getElementById('set_site_name').value = settings.site_name || 'MedDoc Akademi';
+        }
+
+        async function saveSettings() {
+            const settings = {
+                trial_seconds: document.getElementById('set_trial_seconds').value,
+                monthly_price: document.getElementById('set_monthly_price').value,
+                currency: document.getElementById('set_currency').value,
+                site_name: document.getElementById('set_site_name').value,
+            };
+            await API('/api/admin/settings', { method: 'PUT', body: JSON.stringify({ settings }) });
+            const saved = document.getElementById('settingsSaved');
+            saved.style.display = 'inline';
+            setTimeout(() => { saved.style.display = 'none'; }, 2000);
+        }
+
+        async function loadUsers() {
+            const data = await API(`/api/admin/users?page=${currentPage}&limit=15&search=${encodeURIComponent(currentSearch)}`);
+            const tbody = document.getElementById('usersBody');
+
+            const schoolNames = { AUZEF: 'AUZEF', ANADOLU_AOF: 'Anadolu AÖF', ATATURK_AOF: 'Atatürk AÖF' };
+
+            tbody.innerHTML = data.users.map(u => `
+        <tr>
+          <td style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-dim)">${u.id}</td>
+          <td style="font-weight:600">${u.email}</td>
+          <td>${u.name || '—'}</td>
+          <td><span class="tag primary">${schoolNames[u.school_key] || u.school_key}</span></td>
+          <td>${u.has_sub ? '<span class="tag success">Premium</span>' : '<span class="tag warning">Ücretsiz</span>'}</td>
+          <td style="font-size:12px;color:var(--text-dim)">${new Date(u.created_at).toLocaleDateString('tr-TR')}</td>
+          <td>
+            <div style="display:flex;gap:6px">
+              ${u.has_sub
+                    ? `<button class="btn-danger" style="font-size:11px;padding:5px 10px" onclick="openSubModal(${u.id},'revoke','${u.email}')">İptal</button>`
+                    : `<button class="btn-success" style="font-size:11px;padding:5px 10px" onclick="openSubModal(${u.id},'grant','${u.email}')">Üyelik Ver</button>`
+                }
+              <button class="btn-ghost" style="font-size:11px;padding:5px 10px;color:var(--danger);border-color:rgba(239,71,111,0.3)" onclick="deleteUser(${u.id},'${u.email}')">Sil</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+
+            document.getElementById('usersPagination').textContent = `Sayfa ${data.page}/${data.totalPages} (${data.total} kullanıcı)`;
+            document.getElementById('prevPageBtn').disabled = data.page <= 1;
+            document.getElementById('nextPageBtn').disabled = data.page >= data.totalPages;
+        }
+
+        function changePage(dir) {
+            currentPage += dir;
+            if (currentPage < 1) currentPage = 1;
+            loadUsers();
+        }
+
+        document.getElementById('userSearch').addEventListener('input', (e) => {
+            currentSearch = e.target.value;
+            currentPage = 1;
+            loadUsers();
+        });
+
+        function openSubModal(userId, action, email) {
+            subActionData = { userId, action };
+            const modal = document.getElementById('subModal');
+            if (action === 'grant') {
+                document.getElementById('subModalTitle').textContent = 'Üyelik Ver';
+                document.getElementById('subModalBody').innerHTML = `
+          <p style="color:var(--text-muted);font-size:14px;margin-bottom:16px"><strong>${email}</strong> kullanıcısına premium üyelik verilecek.</p>
+          <div class="form-group">
+            <label>Üyelik Süresi (Gün)</label>
+            <input type="number" class="form-input" id="subDays" value="30">
+          </div>
+        `;
+                document.getElementById('subModalAction').textContent = 'Üyelik Ver';
+                document.getElementById('subModalAction').className = 'btn-success';
+            } else {
+                document.getElementById('subModalTitle').textContent = 'Üyelik İptal';
+                document.getElementById('subModalBody').innerHTML = `
+          <p style="color:var(--text-muted);font-size:14px"><strong>${email}</strong> kullanıcısının premium üyeliği iptal edilecek.</p>
+        `;
+                document.getElementById('subModalAction').textContent = 'Üyeliği İptal Et';
+                document.getElementById('subModalAction').className = 'btn-danger';
+            }
+            modal.classList.add('show');
+        }
+
+        async function executeSubAction() {
+            if (!subActionData) return;
+            const body = { action: subActionData.action };
+            if (subActionData.action === 'grant') {
+                body.days = parseInt(document.getElementById('subDays')?.value || '30');
+            }
+            await API(`/api/admin/users/${subActionData.userId}/subscription`, { method: 'PUT', body: JSON.stringify(body) });
+            closeModal();
+            loadUsers();
+            loadStats();
+        }
+
+        async function deleteUser(id, email) {
+            if (!confirm(`"${email}" kullanıcısını silmek istediğinize emin misiniz?`)) return;
+            await API(`/api/admin/users/${id}`, { method: 'DELETE' });
+            loadUsers();
+            loadStats();
+        }
+
+        function closeModal() {
+            document.getElementById('subModal').classList.remove('show');
+            subActionData = null;
+        }
+
+        async function loadDataPage() {
+            const data = await API('/api/data/schools');
+            schoolsData = data;
+
+            let totalDepts = 0, totalCourses = 0;
+            const cards = [];
+            const schoolNames = { AUZEF: 'AUZEF', ANADOLU_AOF: 'Anadolu AÖF', ATATURK_AOF: 'Atatürk AÖF' };
+            const colors = { AUZEF: 'var(--primary)', ANADOLU_AOF: 'var(--secondary)', ATATURK_AOF: 'var(--danger)' };
+
+            for (const [key, school] of Object.entries(data)) {
+                let sc = 0;
+                school.departments.forEach(d => { sc += d.courses.length; });
+                totalDepts += school.departments.length;
+                totalCourses += sc;
+                cards.push(`
+          <div class="stat-card">
+            <div class="stat-icon" style="background:${colors[key]}22;color:${colors[key]}"><i class="bi bi-building"></i></div>
+            <div class="stat-num" style="font-size:22px">${school.departments.length}</div>
+            <div class="stat-label">${schoolNames[key] || key} — Bölüm</div>
+            <div style="font-size:11px;color:var(--text-dim);margin-top:4px">${sc} ders</div>
+          </div>
+        `);
+            }
+
+            cards.unshift(`
+        <div class="stat-card" style="border-color:rgba(67,97,238,0.3)">
+          <div class="stat-icon" style="background:var(--primary-soft);color:var(--primary)"><i class="bi bi-globe"></i></div>
+          <div class="stat-num">${Object.keys(data).length}</div>
+          <div class="stat-label">Toplam Okul</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:4px">${totalDepts} bölüm · ${totalCourses} ders</div>
+        </div>
+      `);
+
+            document.getElementById('dataStats').innerHTML = cards.join('');
+
+            // Detailed school tables
+            let details = '';
+            for (const [key, school] of Object.entries(data)) {
+                details += `<h3 style="font-size:16px;font-weight:800;margin:24px 0 12px">${school.name}</h3>`;
+                details += `<div style="overflow-x:auto"><table class="data-table"><thead><tr><th>#</th><th>Bölüm</th><th>Ders Sayısı</th></tr></thead><tbody>`;
+                school.departments.forEach((d, i) => {
+                    details += `<tr><td style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-dim)">${i + 1}</td><td style="font-weight:600">${d.name}</td><td>${d.courses.length}</td></tr>`;
+                });
+                details += `</tbody></table></div>`;
+            }
+            document.getElementById('dataDetails').innerHTML = details;
+        }
+
+        // ──── MESSAGES ────
+        async function loadMessages() {
+            try {
+                const data = await API(`/api/admin/messages?page=${currentMsgPage}&limit=10`);
+                const tbody = document.getElementById('messagesBody');
+                if (!data.messages || data.messages.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted)">Henüz mesaj yok.</td></tr>';
+                    document.getElementById('messagesPagination').textContent = 'Sayfa 1/1 (0 mesaj)';
+                    return;
+                }
+                tbody.innerHTML = data.messages.map(m => `
+                    <tr style="${m.status === 'unread' ? 'background:rgba(67,97,238,0.05)' : ''}">
+                        <td style="font-size:12px;color:var(--text-dim)">${new Date(m.created_at).toLocaleString('tr-TR')}</td>
+                        <td>
+                            <div style="font-weight:600">${m.sender_name}</div>
+                            <div style="font-size:11px;color:var(--text-dim)">${m.sender_email || '—'}</div>
+                        </td>
+                        <td style="font-weight:600">${m.subject}</td>
+                        <td style="max-width:300px;font-size:13px"><div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${m.message}">${m.message}</div></td>
+                        <td>
+                            ${m.status === 'unread' ? '<span class="tag warning">Okunmadı</span>' : '<span class="tag success">Okundu</span>'}
+                        </td>
+                        <td>
+                            <div style="display:flex;gap:6px">
+                                ${m.status === 'unread'
+                        ? `<button class="btn-ghost" style="font-size:11px;padding:5px 10px;color:var(--primary);border-color:rgba(67,97,238,0.3)" onclick="updateMsgStatus(${m.id},'read')">Okundu İşaretle</button>`
+                        : `<button class="btn-ghost" style="font-size:11px;padding:5px 10px" onclick="updateMsgStatus(${m.id},'unread')">Okunmadı İşaretle</button>`}
+                                <button class="btn-ghost" style="font-size:11px;padding:5px 10px;color:var(--danger);border-color:rgba(239,71,111,0.3)" onclick="deleteMsg(${m.id})">Sil</button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+                document.getElementById('messagesPagination').textContent = `Sayfa ${data.page}/${data.totalPages} (${data.total} mesaj)`;
+                document.getElementById('prevMsgBtn').disabled = data.page <= 1;
+                document.getElementById('nextMsgBtn').disabled = data.page >= data.totalPages;
+            } catch (err) {
+                console.error("Mesajlar yüklenemedi", err);
+            }
+        }
+
+        function changeMsgPage(dir) {
+            currentMsgPage += dir;
+            if (currentMsgPage < 1) currentMsgPage = 1;
+            loadMessages();
+        }
+
+        async function updateMsgStatus(id, status) {
+            await API(`/api/admin/messages/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) });
+            loadMessages();
+        }
+
+        async function deleteMsg(id) {
+            if (!confirm('Bu mesajı silmek istediğinize emin misiniz?')) return;
+            await API(`/api/admin/messages/${id}`, { method: 'DELETE' });
+            loadMessages();
+        }
+
+        // ──── SCRAPER ────
+        let activeScraperPoll = null;
+
+        async function loadScraperJobs() {
+            try {
+                const jobs = await API('/api/admin/scraper/jobs');
+                const tbody = document.getElementById('scraperJobsBody');
+                if (!jobs || jobs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-muted)">Önceki görev bulunamadı.</td></tr>';
+                    return;
+                }
+
+                const statusColors = { pending: 'warning', running: 'primary', completed: 'success', failed: 'danger' };
+                const statusNames = { pending: 'Bekliyor', running: 'Çalışıyor', completed: 'Tamamlandı', failed: 'Hata' };
+
+                tbody.innerHTML = jobs.map(j => `
+                    <tr>
+                        <td style="font-size:12px;color:var(--text-dim)">${new Date(j.created_at).toLocaleString('tr-TR')}</td>
+                        <td style="font-weight:600">${j.university_key}</td>
+                        <td style="font-size:12px"><a href="${j.source_url}" target="_blank" style="color:var(--primary)">${j.source_url}</a></td>
+                        <td><span class="tag ${statusColors[j.status] || 'primary'}">${statusNames[j.status] || j.status}</span></td>
+                        <td style="font-size:12px;color:var(--text-muted)">
+                            ${j.items_processed > 0 ? `${j.items_processed} öğe` : '—'}
+                            ${j.error_message ? `<div style="color:var(--danger);margin-top:4px" title="${j.error_message}">Hata detayları için üzerine gelin</div>` : ''}
+                        </td>
+                    </tr>
+                `).join('');
+
+                // If there's a running job, poll it
+                if (jobs.some(j => j.status === 'running') && !activeScraperPoll) {
+                    activeScraperPoll = setInterval(loadScraperJobs, 5000);
+                } else if (!jobs.some(j => j.status === 'running') && activeScraperPoll) {
+                    clearInterval(activeScraperPoll);
+                    activeScraperPoll = null;
+                }
+            } catch (err) {
+                console.error("Scraper görevleri yüklenemedi", err);
+            }
+        }
+
+        async function startScraping() {
+            const univ = document.getElementById('scraperUniv').value;
+            const url = document.getElementById('scraperUrl').value.trim();
+            if (!url) { alert('Lütfen geçerli bir URL girin'); return; }
+
+            const btn = document.getElementById('startScraperBtn');
+            const statusBox = document.getElementById('scraperStatus');
+            const statusText = document.getElementById('scraperStatusText');
+            const logsBox = document.getElementById('scraperLogs');
+
+            btn.disabled = true;
+            statusBox.style.display = 'block';
+            statusText.textContent = 'Başlatılıyor...';
+            logsBox.innerHTML = `<div>[${new Date().toLocaleTimeString()}] İstek gönderildi: ${univ} -> ${url}</div>`;
+
+            try {
+                const res = await API('/api/admin/scraper/start', { method: 'POST', body: JSON.stringify({ url, university: univ, recursive: false }) });
+                if (res.error) throw new Error(res.error);
+
+                statusText.textContent = 'Çalışıyor (Arka planda)';
+                logsBox.innerHTML += `<div><span style="color:var(--success)">Görev ID: ${res.jobId}</span> başarıyla sıraya eklendi.</div>`;
+                document.getElementById('scraperUrl').value = '';
+
+                loadScraperJobs();
+            } catch (err) {
+                statusText.textContent = 'Hata Oluştu';
+                statusText.style.color = 'var(--danger)';
+                logsBox.innerHTML += `<div style="color:var(--danger)">[Hata] ${err.message}</div>`;
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // ──── NAVIGATION ────
+        function showPage(pageName) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-' + pageName).classList.add('active');
+            document.querySelectorAll('.nav-link-custom').forEach(l => l.classList.remove('active'));
+            document.querySelector(`[data-page="${pageName}"]`)?.classList.add('active');
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebarOverlay').classList.remove('open');
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = '/login.html';
+        }
+
+        document.getElementById('hamburgerBtn')?.addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('sidebarOverlay').classList.toggle('open');
+        });
+
+        document.getElementById('sidebarOverlay')?.addEventListener('click', () => {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebarOverlay').classList.remove('open');
+        });
+
+        init();
+    </script>
+</body>
+
+</html>
