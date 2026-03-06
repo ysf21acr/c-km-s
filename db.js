@@ -128,7 +128,7 @@ function migrate() {
     monthly_price: '49.99',
     currency: 'TL',
     trial_days: '0',
-    site_name: 'MedDoc Akademi',
+    site_name: 'Açık ve Uzaktan Akademi',
     scrape_enabled: '1',
     scrape_time: '03:00'
   };

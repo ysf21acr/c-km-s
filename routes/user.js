@@ -1,7 +1,6 @@
 const express = require('express');
 const { getDb } = require('../db');
 const { authMiddleware } = require('../middleware/auth');
-const { authMiddleware } = require('../middleware/auth');
 const { checkSubscription } = require('../middleware/subscription');
 const fs = require('fs');
 const path = require('path');

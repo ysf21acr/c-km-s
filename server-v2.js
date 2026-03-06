@@ -2,18 +2,17 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
-const { migrateV2 } = require('./db-v2');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const { migrateV2, query } = require('./db-v2');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
 app.use(cors());
-app.use(express.json({ limit: '1mb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '200mb' }));
+app.use(express.urlencoded({ extended: true, limit: '200mb' }));
 
-// Security
-const helmet = require('helmet');
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
@@ -30,12 +29,32 @@ app.use(helmet({
     crossOriginEmbedderPolicy: false
 }));
 
-const rateLimit = require('express-rate-limit');
 app.use('/api/', rateLimit({ windowMs: 15 * 60 * 1000, max: 200, message: { error: 'Çok fazla istek. Lütfen bekleyin.' } }));
 app.use('/api/auth/', rateLimit({ windowMs: 15 * 60 * 1000, max: 15, message: { error: 'Çok fazla giriş denemesi.' } }));
 app.use('/api/register', rateLimit({ windowMs: 15 * 60 * 1000, max: 10, message: { error: 'Çok fazla kayıt denemesi.' } }));
 
-// Static files — explicit root route + static middleware
+let maintenanceCache = { value: false, checkedAt: 0 };
+app.use(async (req, res, next) => {
+    try {
+        if (req.path.startsWith('/admin') || req.path.startsWith('/api/v1/admin')) return next();
+        const now = Date.now();
+        if (now - maintenanceCache.checkedAt > 30000) {
+            const r = await query("SELECT value FROM settings WHERE key = 'maintenance_mode'").catch(() => ({ rows: [] }));
+            maintenanceCache = {
+                value: String(r.rows[0]?.value || 'false').toLowerCase() === 'true',
+                checkedAt: now
+            };
+        }
+        if (!maintenanceCache.value) return next();
+        if (req.path.startsWith('/api/')) {
+            return res.status(503).json({ error: 'Sistem bakım modunda. Lütfen daha sonra tekrar deneyin.' });
+        }
+        return res.status(503).send('Sistem bakım modunda. Lütfen daha sonra tekrar deneyin.');
+    } catch (err) {
+        return next();
+    }
+});
+
 const publicDir = path.join(__dirname, 'public');
 
 app.get('/', (req, res) => {
@@ -44,43 +63,37 @@ app.get('/', (req, res) => {
 
 app.use(express.static(publicDir));
 
-// API Routes
 app.use('/api/v1/auth', require('./routes/v2/auth'));
 app.use('/api/v1/subscription', require('./routes/v2/subscription'));
 app.use('/api/v1/study', require('./routes/v2/study'));
 app.use('/api/v1/admin', require('./routes/v2/admin'));
-
-// Compatibility routes for existing frontend (old API paths)
 app.use('/api', require('./routes/v2/compat'));
 
-// Admin Panel SPA Fallback (React Router)
 app.use('/admin', (req, res, next) => {
-    // Let static files through (css, js, etc.)
     if (req.path.includes('.')) return next();
     res.sendFile(path.join(publicDir, 'admin', 'index.html'));
 });
 
-// Main Site SPA Fallback
 app.use((req, res, next) => {
     if (req.method === 'GET' && !req.path.startsWith('/api') && !req.path.startsWith('/admin')) {
-        res.sendFile(path.join(publicDir, 'index.html'));
-    } else {
-        next();
+        return res.sendFile(path.join(publicDir, 'index.html'));
     }
+    return next();
 });
 
-// Error Handler
 app.use((err, req, res, next) => {
     console.error('Error:', err.message);
     res.status(500).json({ error: 'Sunucu hatası.' });
 });
 
-// Start
 async function start() {
     try {
         await migrateV2();
+        // Start subscription cron job
+        const { startSubscriptionCron } = require('./cron/subscription');
+        startSubscriptionCron();
         app.listen(PORT, () => {
-            console.log(`\n🚀 MedDoc Akademi V2`);
+            console.log(`\n🚀 Açık ve Uzaktan Akademi V2`);
             console.log(`   http://localhost:${PORT}\n`);
         });
     } catch (e) {

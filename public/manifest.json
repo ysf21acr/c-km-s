@@ -1,6 +1,6 @@
 {
-    "name": "MedDoc Akademi",
-    "short_name": "MedDoc",
+    "name": "Açık ve Uzaktan Akademi",
+    "short_name": "Açık Akademi",
     "description": "Premium Sınav ve Ders Takip Platformu",
     "start_url": "/?source=pwa",
     "display": "standalone",

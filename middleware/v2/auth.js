@@ -1,8 +1,8 @@
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key';
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'super-secret-refresh-key';
+const JWT_SECRET = process.env.JWT_SECRET || 'meddoc-super-secret-key-change-me';
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'meddoc-super-secret-refresh-key-change-me';
 
 function authMiddleware(req, res, next) {
     const authHeader = req.headers['authorization'];

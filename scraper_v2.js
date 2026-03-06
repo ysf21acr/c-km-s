@@ -1,6 +1,6 @@
 /**
- * MedDoc — Lolonolo Full Scraper
- * Scrapes: University → Departments → Courses (by class year) → Exam Questions
+ * MedDoc Ã¢â‚¬â€ Lolonolo Full Scraper
+ * Scrapes: University Ã¢â€ â€™ Departments Ã¢â€ â€™ Courses (by class year) Ã¢â€ â€™ Exam Questions
  * Saves to PostgreSQL database with upsert logic
  */
 
@@ -11,17 +11,25 @@ const { query, migrateV2 } = require('./db-v2');
 // ==================== CONFIGURATION ====================
 const DELAY_MS = 400;           // delay between requests (be nice to server)
 const BATCH_SIZE = 3;           // concurrent requests per batch
-const FILTER_SCHOOL = null;     // set to 'AUZEF', 'ANADOLU_AOF', or 'ATATURK_AOF' to scrape only one
+const FILTER_SCHOOL = process.env.FILTER_SCHOOL || null; // 'AUZEF' | 'ANADOLU_AOF' | 'ATATURK_AOF'
 
 // ==================== SCHOOL DATA ====================
 const schools = {
-    AUZEF: { name: 'İstanbul Üniversitesi AUZEF', slug: 'auzef', url: 'https://lolonolo.com/auzef/' },
-    ANADOLU_AOF: { name: 'Anadolu Üniversitesi AÖF', slug: 'anadolu-aof', url: 'https://lolonolo.com/anadolu-aof/' },
-    ATATURK_AOF: { name: 'Atatürk Üniversitesi AÖF', slug: 'ataturk-aof', url: 'https://lolonolo.com/ataturk-aof/' },
+    AUZEF: { name: 'Ã„Â°stanbul ÃƒÅ“niversitesi AUZEF', slug: 'auzef', url: 'https://lolonolo.com/auzef/' },
+    ANADOLU_AOF: { name: 'Anadolu ÃƒÅ“niversitesi AÃƒâ€“F', slug: 'anadolu-aof', url: 'https://lolonolo.com/anadolu-aof/' },
+    ATATURK_AOF: { name: 'AtatÃƒÂ¼rk ÃƒÅ“niversitesi AÃƒâ€“F', slug: 'ataturk-aof', url: 'https://lolonolo.com/ataturk-aof/' },
 };
 
 // ==================== HELPERS ====================
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+function emitProgress(payload) {
+    try {
+        console.log(`__PROGRESS__ ${JSON.stringify(payload)}`);
+    } catch (_) {
+        // Ignore progress serialization issues so scraper flow never breaks.
+    }
+}
 
 async function fetchHTML(url) {
     for (let attempt = 0; attempt < 3; attempt++) {
@@ -40,7 +48,7 @@ async function fetchHTML(url) {
 
 // ==================== STEP 1: Get Departments from School Page ====================
 async function scrapeDepartments(schoolKey, school) {
-    console.log(`\n📚 ${school.name} — Bölümler çekiliyor...`);
+    console.log(`\nÄŸÅ¸â€œÅ¡ ${school.name} Ã¢â‚¬â€ BÃƒÂ¶lÃƒÂ¼mler ÃƒÂ§ekiliyor...`);
     const html = await fetchHTML(school.url);
     const $ = cheerio.load(html);
     const departments = [];
@@ -54,17 +62,17 @@ async function scrapeDepartments(schoolKey, school) {
         if (!href.includes(`lolonolo.com/${school.slug}/`)) continue;
         if (href === school.url || href === school.url.replace(/\/$/, '')) continue;
         if (text.length < 3) continue;
-        if (/indir|İndir|reklamsız|abone|uygulama|staj|takvim|telegram/i.test(text)) continue;
+        if (/indir|Ã„Â°ndir|reklamsÃ„Â±z|abone|uygulama|staj|takvim|telegram/i.test(text)) continue;
         if (/play\.google|apps\.apple|shopier|humix/i.test(href)) continue;
 
-        // Remove trailing "–" and clean text
-        const cleanName = text.replace(/\s*[–-]\s*$/, '').trim();
+        // Remove trailing "Ã¢â‚¬â€œ" and clean text
+        const cleanName = text.replace(/\s*[Ã¢â‚¬â€œ-]\s*$/, '').trim();
         if (!departments.find(d => d.url === href || d.url === href + '/' || d.url + '/' === href)) {
             departments.push({ name: cleanName, url: href.replace(/\/$/, '') + '/' });
         }
     }
 
-    console.log(`   ✅ ${departments.length} bölüm bulundu`);
+    console.log(`   Ã¢Å“â€¦ ${departments.length} bÃƒÂ¶lÃƒÂ¼m bulundu`);
     return departments;
 }
 
@@ -79,10 +87,10 @@ async function scrapeCourses(dept) {
         const content = $('.entry-content').html() || $('article').html() || $('body').html();
         if (!content) return courses;
 
-        // Split by class year headers (1. Sınıf, 2. Sınıf, etc.)
-        // We'll look for h4/h3 headers that contain "Sınıf"
+        // Split by class year headers (1. SÃ„Â±nÃ„Â±f, 2. SÃ„Â±nÃ„Â±f, etc.)
+        // We'll look for h4/h3 headers that contain "SÃ„Â±nÃ„Â±f"
         let currentYear = null;
-        let currentTerm = null; // Güz / Bahar
+        let currentTerm = null; // GÃƒÂ¼z / Bahar
 
         const $content = cheerio.load(content);
         const elements = $content('*').toArray();
@@ -93,18 +101,18 @@ async function scrapeCourses(dept) {
 
             // Detect year section headers
             if (/^h[2-5]$/.test(tag)) {
-                const yearMatch = text.match(/(\d+)\.\s*[Ss]ınıf/);
+                const yearMatch = text.match(/(\d+)\.\s*[Ss]Ã„Â±nÃ„Â±f/);
                 if (yearMatch) {
-                    currentYear = yearMatch[1] + '. Sınıf';
-                    // Check if "Güz" or "Bahar" is included
-                    if (/güz/i.test(text)) currentTerm = 'Güz';
+                    currentYear = yearMatch[1] + '. SÃ„Â±nÃ„Â±f';
+                    // Check if "GÃƒÂ¼z" or "Bahar" is included
+                    if (/gÃƒÂ¼z/i.test(text)) currentTerm = 'GÃƒÂ¼z';
                     else if (/bahar/i.test(text)) currentTerm = 'Bahar';
                     else currentTerm = null;
                     continue;
                 }
-                // Detect Güz/Bahar sub-headers
-                if (/güz/i.test(text) && !/sınıf/i.test(text)) { currentTerm = 'Güz'; continue; }
-                if (/bahar/i.test(text) && !/sınıf/i.test(text)) { currentTerm = 'Bahar'; continue; }
+                // Detect GÃƒÂ¼z/Bahar sub-headers
+                if (/gÃƒÂ¼z/i.test(text) && !/sÃ„Â±nÃ„Â±f/i.test(text)) { currentTerm = 'GÃƒÂ¼z'; continue; }
+                if (/bahar/i.test(text) && !/sÃ„Â±nÃ„Â±f/i.test(text)) { currentTerm = 'Bahar'; continue; }
             }
 
             // Collect course links
@@ -113,12 +121,12 @@ async function scrapeCourses(dept) {
                 const linkText = $content(el).text().trim();
 
                 if (href.includes('lolonolo.com/') && linkText.length > 2) {
-                    if (/indir|İndir|reklamsız|abone|uygulama|telegram|play\.google|apps\.apple/i.test(linkText + href)) continue;
+                    if (/indir|Ã„Â°ndir|reklamsÃ„Â±z|abone|uygulama|telegram|play\.google|apps\.apple/i.test(linkText + href)) continue;
                     if (/staj|takvim|gizlilik/i.test(linkText + href)) continue;
 
                     if (!courses.find(c => c.url === href)) {
                         courses.push({
-                            name: linkText.replace(/\s*[–-]\s*$/, '').trim(),
+                            name: linkText.replace(/\s*[Ã¢â‚¬â€œ-]\s*$/, '').trim(),
                             url: href,
                             year: currentYear || 'Bilinmiyor',
                             term: currentTerm || 'Bilinmiyor',
@@ -130,7 +138,7 @@ async function scrapeCourses(dept) {
 
         return courses;
     } catch (err) {
-        console.error(`     ❌ Ders çekme hatası (${dept.name}): ${err.message}`);
+        console.error(`     Ã¢ÂÅ’ Ders ÃƒÂ§ekme hatasÃ„Â± (${dept.name}): ${err.message}`);
         return [];
     }
 }
@@ -242,12 +250,12 @@ async function upsertCourse(deptId, name) {
 async function upsertExam(courseId, year, term, type) {
     const existing = await query(
         'SELECT id FROM exams WHERE course_id = $1 AND year = $2 AND term = $3 AND type = $4',
-        [courseId, year || 'Bilinmiyor', term || 'Bilinmiyor', type || 'Çıkmış Sorular']
+        [courseId, year || 'Bilinmiyor', term || 'Bilinmiyor', type || 'Ãƒâ€¡Ã„Â±kmÃ„Â±Ã…Å¸ Sorular']
     );
     if (existing.rows.length > 0) return existing.rows[0].id;
     const res = await query(
         'INSERT INTO exams (course_id, year, term, type) VALUES ($1, $2, $3, $4) RETURNING id',
-        [courseId, year || 'Bilinmiyor', term || 'Bilinmiyor', type || 'Çıkmış Sorular']
+        [courseId, year || 'Bilinmiyor', term || 'Bilinmiyor', type || 'Ãƒâ€¡Ã„Â±kmÃ„Â±Ã…Å¸ Sorular']
     );
     return res.rows[0].id;
 }
@@ -259,28 +267,64 @@ async function insertQuestion(examId, questionText, options, correct) {
         'SELECT id FROM questions WHERE exam_id = $1 AND question_text LIKE $2',
         [examId, prefix + '%']
     );
-    if (existing.rows.length > 0) return existing.rows[0].id;
+    if (existing.rows.length > 0) return { id: existing.rows[0].id, inserted: false };
 
     const res = await query(
         'INSERT INTO questions (exam_id, question_text, options, explanation) VALUES ($1, $2, $3, $4) RETURNING id',
-        [examId, questionText, JSON.stringify({ ...options, correct }), `Doğru Cevap: ${correct}`]
+        [examId, questionText, JSON.stringify({ ...options, correct }), `DoÃ„Å¸ru Cevap: ${correct}`]
     );
-    return res.rows[0].id;
+    return { id: res.rows[0].id, inserted: true };
 }
 
 // ==================== MAIN ====================
 async function main() {
-    console.log('🚀 MedDoc Lolonolo Scraper Başlıyor...\n');
+    console.log('ÄŸÅ¸Å¡â‚¬ MedDoc Lolonolo Scraper BaÃ…Å¸lÃ„Â±yor...\n');
     await migrateV2();
 
     const stats = { universities: 0, departments: 0, courses: 0, questions: 0, errors: [] };
+    const progress = {
+        university_key: FILTER_SCHOOL || 'ALL',
+        departments_total: 0,
+        departments_done: 0,
+        courses_total: 0,
+        courses_done: 0,
+        questions_found: 0,
+        questions_saved: 0,
+        errors_count: 0,
+        current_department: null,
+        current_course: null,
+        last_completed_course: null,
+        last_course_questions: 0,
+        last_error: null,
+        stage: 'idle'
+    };
+
+    function pushProgress(extra = {}) {
+        const deptPct = progress.departments_total > 0
+            ? Math.min(100, Math.round((progress.departments_done / progress.departments_total) * 100))
+            : 0;
+        const coursePct = progress.courses_total > 0
+            ? Math.min(100, Math.round((progress.courses_done / progress.courses_total) * 100))
+            : 0;
+        const overallPct = Math.round((deptPct * 0.4) + (coursePct * 0.6));
+        emitProgress({
+            ...progress,
+            department_progress_pct: deptPct,
+            course_progress_pct: coursePct,
+            overall_progress_pct: overallPct,
+            ...extra
+        });
+    }
+
+    pushProgress({ stage: 'start' });
+
     const schoolEntries = FILTER_SCHOOL
         ? [[FILTER_SCHOOL, schools[FILTER_SCHOOL]]]
         : Object.entries(schools);
 
     for (const [schoolKey, school] of schoolEntries) {
         console.log(`\n${'='.repeat(60)}`);
-        console.log(`🏛️  ${school.name}`);
+        console.log(`ÄŸÅ¸Ââ€ºÃ¯Â¸Â  ${school.name}`);
         console.log('='.repeat(60));
 
         // 1. Upsert university
@@ -289,17 +333,26 @@ async function main() {
 
         // 2. Get departments
         const departments = await scrapeDepartments(schoolKey, school);
+        progress.university_key = schoolKey;
+        progress.departments_total = departments.length;
+        progress.current_department = null;
+        progress.current_course = null;
+        pushProgress({ stage: 'departments_discovered' });
 
         for (const dept of departments) {
-            console.log(`\n  📂 ${dept.name}`);
+            console.log(`\n  ÄŸÅ¸â€œâ€š ${dept.name}`);
 
+            progress.current_department = dept.name;
+            progress.current_course = null;
             const deptId = await upsertDepartment(uniId, dept.name);
             stats.departments++;
 
             // 3. Get courses from department page
             await sleep(DELAY_MS);
             const courses = await scrapeCourses(dept);
-            console.log(`     📖 ${courses.length} ders bulundu`);
+            progress.courses_total += courses.length;
+            pushProgress({ stage: 'courses_discovered', current_department: dept.name });
+            console.log(`     ÄŸÅ¸â€œâ€“ ${courses.length} ders bulundu`);
 
             // 4. Process courses in batches
             for (let i = 0; i < courses.length; i += BATCH_SIZE) {
@@ -307,6 +360,7 @@ async function main() {
 
                 await Promise.all(batch.map(async (course) => {
                     try {
+                        progress.current_course = course.name;
                         const courseId = await upsertCourse(deptId, course.name);
                         stats.courses++;
 
@@ -314,52 +368,92 @@ async function main() {
                         await sleep(DELAY_MS);
                         const courseHtml = await fetchHTML(course.url);
                         const questions = parseQuestions(courseHtml);
+                        progress.questions_found += questions.length;
 
                         if (questions.length > 0) {
                             // Determine year/term from course data
-                            const examId = await upsertExam(courseId, course.year, course.term, 'Çıkmış Sorular');
+                            const examId = await upsertExam(courseId, course.year, course.term, 'Ãƒâ€¡Ã„Â±kmÃ„Â±Ã…Å¸ Sorular');
 
+                            let insertedForCourse = 0;
                             for (const q of questions) {
                                 if (q.text && Object.keys(q.options).length >= 3) {
-                                    await insertQuestion(examId, q.text, q.options, q.correct);
-                                    stats.questions++;
+                                    const saved = await insertQuestion(examId, q.text, q.options, q.correct);
+                                    if (saved.inserted) {
+                                        stats.questions++;
+                                        insertedForCourse++;
+                                        progress.questions_saved += 1;
+                                    }
                                 }
                             }
-                            console.log(`       ✅ ${course.name}: ${questions.length} soru`);
+                            console.log(`       Ã¢Å“â€¦ ${course.name}: ${questions.length} soru`);
+                            progress.last_course_questions = insertedForCourse;
                         } else {
-                            console.log(`       ⚪ ${course.name}: soru bulunamadı`);
+                            progress.last_course_questions = 0;
+                            console.log(`       Ã¢Å¡Âª ${course.name}: soru bulunamadÃ„Â±`);
                         }
                     } catch (err) {
-                        console.error(`       ❌ ${course.name}: ${err.message}`);
+                        console.error(`       Ã¢ÂÅ’ ${course.name}: ${err.message}`);
                         stats.errors.push({ course: course.name, error: err.message });
+                        progress.errors_count += 1;
+                        progress.last_error = `${course.name}: ${err.message}`;
+                        progress.last_course_questions = 0;
+                        pushProgress({ stage: 'course_error', current_course: course.name, current_department: dept.name });
+                    } finally {
+                        progress.courses_done += 1;
+                        progress.last_completed_course = course.name;
+                        progress.current_course = null;
+                        pushProgress({
+                            stage: 'course_processed',
+                            current_course: course.name,
+                            current_department: dept.name,
+                            questions_found: progress.questions_found,
+                            questions_saved: progress.questions_saved,
+                            errors_count: progress.errors_count
+                        });
                     }
                 }));
 
                 await sleep(DELAY_MS);
             }
+
+            progress.departments_done += 1;
+            progress.current_course = null;
+            pushProgress({ stage: 'department_completed', current_department: dept.name });
         }
     }
 
     // Print summary
     console.log(`\n${'='.repeat(60)}`);
-    console.log('📊 ÖZET');
+    console.log('ÄŸÅ¸â€œÅ  Ãƒâ€“ZET');
     console.log('='.repeat(60));
-    console.log(`  Üniversite: ${stats.universities}`);
-    console.log(`  Bölüm:      ${stats.departments}`);
+    console.log(`  ÃƒÅ“niversite: ${stats.universities}`);
+    console.log(`  BÃƒÂ¶lÃƒÂ¼m:      ${stats.departments}`);
     console.log(`  Ders:        ${stats.courses}`);
     console.log(`  Soru:        ${stats.questions}`);
     console.log(`  Hata:        ${stats.errors.length}`);
 
     if (stats.errors.length > 0) {
-        console.log('\n⚠️  Hatalar:');
+        console.log('\nÃ¢Å¡Â Ã¯Â¸Â  Hatalar:');
         stats.errors.forEach(e => console.log(`  - ${e.course}: ${e.error}`));
     }
 
-    console.log('\n✅ Scraping tamamlandı!');
+    console.log('\nÃ¢Å“â€¦ Scraping tamamlandÃ„Â±!');
+    progress.departments_done = progress.departments_total;
+    progress.courses_done = progress.courses_total;
+    progress.current_course = null;
+    pushProgress({
+        stage: 'completed',
+        questions_found: progress.questions_found,
+        questions_saved: progress.questions_saved,
+        errors_count: progress.errors_count,
+        department_progress_pct: 100,
+        course_progress_pct: 100,
+        overall_progress_pct: 100
+    });
     process.exit(0);
 }
 
 main().catch(err => {
-    console.error('💥 Fatal error:', err);
+    console.error('ÄŸÅ¸â€™Â¥ Fatal error:', err);
     process.exit(1);
 });

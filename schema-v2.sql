@@ -201,6 +201,8 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     status VARCHAR(20) DEFAULT 'active',
     start_date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     end_date TIMESTAMP WITH TIME ZONE,
+    auto_renew BOOLEAN DEFAULT true,
+    cancelled_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

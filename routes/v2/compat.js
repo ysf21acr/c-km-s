@@ -42,6 +42,12 @@ router.post('/register', async (req, res) => {
         const { email, password, name, school_key, department_idx } = req.body;
         if (!email || !password) return res.status(400).json({ error: 'E-posta ve şifre gereklidir.' });
 
+        const regSetting = await query("SELECT value FROM settings WHERE key = 'registration_enabled'").catch(() => ({ rows: [] }));
+        const isRegEnabled = String(regSetting.rows[0]?.value || 'true').toLowerCase() !== 'false';
+        if (!isRegEnabled) {
+            return res.status(403).json({ error: 'Yeni kullanıcı kaydı geçici olarak kapatılmıştır.' });
+        }
+
         const checkUser = await query('SELECT id FROM users WHERE email = $1', [email]);
         if (checkUser.rows.length > 0) return res.status(400).json({ error: 'Bu e-posta adresiyle kayıtlı bir hesap zaten var.' });
 
@@ -57,7 +63,7 @@ router.post('/register', async (req, res) => {
         let department_id = null;
         if (school_key) {
             // Try to match university by name pattern
-            const nameMap = { 'AUZEF': '%AUZEF%', 'ANADOLU_AOF': '%Anadolu%', 'ATATURK_AOF': '%Atatürk%' };
+            const nameMap = { 'AUZEF': '%AUZEF%', 'ANADOLU_AOF': '%Anadolu%', 'ATATURK_AOF': '%Atat_rk%' };
             const pattern = nameMap[school_key] || `%${school_key}%`;
             const uniResult = await query('SELECT id FROM universities WHERE name ILIKE $1', [pattern]);
             if (uniResult.rows.length > 0) {
@@ -102,9 +108,10 @@ router.get('/data/schools', async (req, res) => {
             const uniDepts = departments.rows.filter(d => d.university_id === uni.id);
             // Generate key from name
             let key = uni.name.toUpperCase().replace(/\s+/g, '_').replace(/[^A-Z0-9_]/g, '');
-            if (uni.name.includes('AUZEF')) key = 'AUZEF';
-            else if (uni.name.includes('Anadolu')) key = 'ANADOLU_AOF';
-            else if (uni.name.includes('Atatürk')) key = 'ATATURK_AOF';
+            const upperName = uni.name.toUpperCase();
+            if (upperName.includes('AUZEF')) key = 'AUZEF';
+            else if (upperName.includes('ANADOLU')) key = 'ANADOLU_AOF';
+            else if (upperName.includes('ATATÜRK') || upperName.includes('ATATURK')) key = 'ATATURK_AOF';
             result[key] = {
                 name: uni.name,
                 departments: uniDepts.map(dept => ({
@@ -179,29 +186,52 @@ router.get('/data/exams', async (req, res) => {
         if (userResult.rows.length === 0) return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
 
         const uniId = userResult.rows[0].university_id;
-        if (!uniId) return res.json([]);
 
         // Get department_id from user profile or query param
         let deptId = req.query.department_id || userResult.rows[0].department_id;
 
-        if (!deptId) {
+        if (uniId && !deptId) {
             const depts = await query('SELECT id FROM departments WHERE university_id = $1 LIMIT 1', [uniId]);
-            if (depts.rows.length === 0) return res.json([]);
-            deptId = depts.rows[0].id;
+            if (depts.rows.length > 0) deptId = depts.rows[0].id;
         }
 
-        const exams = await query(`
-            SELECT e.id, e.year, e.term, e.type, c.name as course_name,
-                   COUNT(q.id) as question_count
-            FROM exams e
-            JOIN courses c ON c.id = e.course_id
-            JOIN departments d ON d.id = c.department_id
-            LEFT JOIN questions q ON q.exam_id = e.id
-            WHERE d.id = $1
-            GROUP BY e.id, e.year, e.term, e.type, c.name
-            HAVING COUNT(q.id) > 0
-            ORDER BY c.name, e.year DESC
-        `, [deptId]);
+        let exams = [];
+        let hasDepartmentExams = false;
+        if (deptId) {
+            // Load exams for specific department
+            const deptExams = await query(`
+                SELECT e.id, e.year, e.term, e.type, c.name as course_name,
+                       COUNT(q.id) as question_count
+                FROM exams e
+                JOIN courses c ON c.id = e.course_id
+                JOIN departments d ON d.id = c.department_id
+                LEFT JOIN questions q ON q.exam_id = e.id
+                WHERE d.id = $1
+                GROUP BY e.id, e.year, e.term, e.type, c.name
+                HAVING COUNT(q.id) > 0
+                ORDER BY c.name, e.year DESC
+            `, [deptId]);
+
+            if (deptExams.rows.length > 0) {
+                exams = deptExams;
+                hasDepartmentExams = true;
+            }
+        }
+
+        if (!hasDepartmentExams) {
+            // Fallback: load ALL available exams when no department is set or empty department
+            exams = await query(`
+                SELECT e.id, e.year, e.term, e.type, c.name as course_name,
+                       COUNT(q.id) as question_count
+                FROM exams e
+                JOIN courses c ON c.id = e.course_id
+                LEFT JOIN questions q ON q.exam_id = e.id
+                GROUP BY e.id, e.year, e.term, e.type, c.name
+                HAVING COUNT(q.id) > 0
+                ORDER BY c.name, e.year DESC
+                LIMIT 200
+            `);
+        }
 
         res.json(exams.rows);
     } catch (err) {
@@ -280,11 +310,35 @@ router.get('/me', async (req, res) => {
         if (result.rows.length === 0) return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
         const user = result.rows[0];
         user.name = `${user.first_name} ${user.last_name}`.trim();
-        user.school_key = user.university_name; // Fallback mapping for older UI code if any
 
-        // Subscription check
-        const subCheck = await query(`SELECT id FROM subscriptions WHERE user_id = $1 AND status = 'active' AND end_date > NOW()`, [user.id]);
+        // Generate correct frontend school_key
+        if (user.university_name) {
+            let key = user.university_name.toUpperCase().replace(/\s+/g, '_').replace(/[^A-Z0-9_]/g, '');
+            const upperName = user.university_name.toUpperCase();
+            if (upperName.includes('AUZEF')) key = 'AUZEF';
+            else if (upperName.includes('ANADOLU')) key = 'ANADOLU_AOF';
+            else if (upperName.includes('ATATÜRK') || upperName.includes('ATATURK')) key = 'ATATURK_AOF';
+            user.school_key = key;
+        } else {
+            user.school_key = null;
+        }
+
+        // Subscription check (active and NOT expired)
+        const subCheck = await query(`SELECT id, end_date, auto_renew, cancelled_at FROM subscriptions WHERE user_id = $1 AND status = 'active' AND end_date > NOW() ORDER BY end_date DESC LIMIT 1`, [user.id]);
         const hasActiveSubscription = subCheck.rows.length > 0;
+        const activeSub = subCheck.rows[0] || null;
+
+        // Subscription details for frontend
+        let subscription_end_date = null;
+        let subscription_cancelled = false;
+        let subscription_days_remaining = 0;
+        if (activeSub) {
+            subscription_end_date = activeSub.end_date;
+            subscription_cancelled = activeSub.cancelled_at !== null || activeSub.auto_renew === false;
+            const endDate = new Date(activeSub.end_date);
+            const now = new Date();
+            subscription_days_remaining = Math.max(0, Math.ceil((endDate - now) / (1000 * 60 * 60 * 24)));
+        }
 
         // Today's usage
         const usageResult = await query(`SELECT COALESCE(SUM(seconds_used), 0) as total FROM usage_log WHERE user_id = $1 AND DATE(created_at) = CURRENT_DATE`, [user.id]).catch(() => ({ rows: [{ total: 0 }] }));
@@ -294,25 +348,61 @@ router.get('/me', async (req, res) => {
         const settingsResult = await query("SELECT value FROM settings WHERE key = 'trial_seconds'").catch(() => ({ rows: [] }));
         const trialSeconds = parseInt(settingsResult.rows[0]?.value || 600);
 
-        res.json({ user, hasActiveSubscription, trialSeconds, todayUsage });
+        res.json({ user, hasActiveSubscription, trialSeconds, todayUsage, subscription_end_date, subscription_cancelled, subscription_days_remaining });
     } catch (err) {
         console.error('Me error:', err);
         res.status(401).json({ error: 'Geçersiz token' });
     }
 });
 
+// POST /api/subscription/cancel — soft cancel (keeps active until expiry)
+router.post('/subscription/cancel', async (req, res) => {
+    try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        if (!token) return res.status(401).json({ error: 'Token gerekli' });
+        const decoded = jwt.verify(token, JWT_SECRET);
+
+        const subResult = await query(`SELECT id FROM subscriptions WHERE user_id = $1 AND status = 'active' AND end_date > NOW() ORDER BY end_date DESC LIMIT 1`, [decoded.id]);
+        if (subResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Aktif abonelik bulunamadı.' });
+        }
+
+        await query(`UPDATE subscriptions SET auto_renew = false, cancelled_at = NOW() WHERE id = $1`, [subResult.rows[0].id]);
+
+        res.json({ success: true, message: 'Abonelik iptal edildi. Süresi dolana kadar aktif kalacaktır.' });
+    } catch (err) {
+        console.error('Cancel subscription error:', err);
+        res.status(500).json({ error: 'Abonelik iptal edilemedi.' });
+    }
+});
+
 // GET /api/data/settings — returns monthly price and trial settings
 router.get('/data/settings', async (req, res) => {
     try {
-        const result = await query("SELECT key, value FROM settings WHERE key IN ('monthly_price', 'trial_seconds')").catch(() => ({ rows: [] }));
+        const result = await query("SELECT key, value FROM settings WHERE key IN ('monthly_price', 'trial_seconds', 'site_name', 'maintenance_mode', 'registration_enabled', 'max_daily_questions', 'site_logo_url', 'site_favicon_url')").catch(() => ({ rows: [] }));
         const settings = {};
         result.rows.forEach(r => { settings[r.key] = r.value; });
         res.json({
             monthly_price: settings.monthly_price || '49.99',
-            trial_seconds: parseInt(settings.trial_seconds || 600)
+            trial_seconds: parseInt(settings.trial_seconds || 600),
+            site_name: settings.site_name || 'Açık ve Uzaktan Akademi',
+            maintenance_mode: settings.maintenance_mode || 'false',
+            registration_enabled: settings.registration_enabled || 'true',
+            max_daily_questions: settings.max_daily_questions || '100',
+            site_logo_url: settings.site_logo_url || '',
+            site_favicon_url: settings.site_favicon_url || ''
         });
     } catch (err) {
-        res.json({ monthly_price: '49.99', trial_seconds: 600 });
+        res.json({
+            monthly_price: '49.99',
+            trial_seconds: 600,
+            site_name: 'Açık ve Uzaktan Akademi',
+            maintenance_mode: 'false',
+            registration_enabled: 'true',
+            max_daily_questions: '100',
+            site_logo_url: '',
+            site_favicon_url: ''
+        });
     }
 });
 

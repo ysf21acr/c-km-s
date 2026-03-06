@@ -215,6 +215,18 @@ async function runScraper() {
 
     console.log(`[CRON] Scrape started at ${new Date().toISOString()}`);
 
+    // Skip if a successful scrape was done in the last 24 hours
+    try {
+        const lastSuccess = db.prepare(
+            "SELECT id FROM scrape_logs WHERE status IN ('success', 'completed_with_errors') AND finished_at > datetime('now', '-24 hours') LIMIT 1"
+        ).get();
+        if (lastSuccess) {
+            console.log('[CRON] Skipping scrape - successful run within last 24h');
+            db.prepare("UPDATE scrape_logs SET status = 'skipped', finished_at = datetime('now') WHERE id = ?").run(logId);
+            return;
+        }
+    } catch (e) { /* continue if check fails */ }
+
     try {
         const dataPath = path.join(__dirname, '..', 'school_data.json');
         if (!fs.existsSync(dataPath)) {

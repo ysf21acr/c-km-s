@@ -4,10 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giriş Yap — MedDoc Akademi | Sınav Hazırlık Platformu</title>
-    <meta name="description" content="MedDoc Akademi'ye giriş yap. Çıkmış sınav sorularını çöz, kendini test et.">
+    <title>Giriş Yap — Açık ve Uzaktan Akademi | Sınav Hazırlık Platformu</title>
+    <meta name="description"
+        content="Açık ve Uzaktan Akademi'ye giriş yap. Çıkmış sınav sorularını çöz, kendini test et.">
     <meta name="robots" content="noindex">
-    <meta property="og:title" content="MedDoc Akademi - Giriş Yap">
+    <meta property="og:title" content="Açık ve Uzaktan Akademi - Giriş Yap">
     <meta property="og:description" content="Sınavlarına hazırlan. Çıkmış soruları çöz.">
     <meta property="og:type" content="website">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
@@ -401,7 +402,7 @@
     <div class="login-left">
         <div class="brand-logo">
             <div class="logo-icon">🎓</div>
-            <h1>Med<span>Doc</span> Akademi</h1>
+            <h1>Açık ve Uzaktan <span>Akademi</span></h1>
         </div>
         <div class="hero-text">
             <h2>Sınavlarına En Etkili<br>Şekilde Hazırlan</h2>
@@ -472,6 +473,27 @@
 
     <script>
         if (localStorage.getItem('token')) window.location.href = '/';
+
+        (async function applyBranding() {
+            try {
+                const r = await fetch('/api/data/settings');
+                const s = await r.json();
+                if (s.site_name) {
+                    document.title = s.site_name + ' - Giriş';
+                    const titleEl = document.querySelector('.brand-logo h1');
+                    if (titleEl) titleEl.textContent = s.site_name;
+                }
+                if (s.site_favicon_url) {
+                    let ico = document.querySelector("link[rel='icon']");
+                    if (!ico) { ico = document.createElement('link'); ico.rel = 'icon'; document.head.appendChild(ico); }
+                    ico.href = s.site_favicon_url;
+                }
+                if (s.site_logo_url) {
+                    const logoIcon = document.querySelector('.brand-logo .logo-icon');
+                    if (logoIcon) logoIcon.innerHTML = `<img src="${s.site_logo_url}" alt="Logo" style="width:100%;height:100%;object-fit:contain">`;
+                }
+            } catch (e) { }
+        })();
 
         // Toggle password visibility
         document.getElementById('togglePassword').addEventListener('click', () => {
